@@ -176,6 +176,16 @@ class CalendarViewModel extends BaseViewModel {
     }).firstOrNull;
   }
 
+  /// All events for the currently selected day (may be multiple).
+  List<CalendarEvent> get selectedEvents {
+    return _events.where((event) {
+      if (event.startDateTime == null) return event.day == _selectedDay;
+      return event.startDateTime!.day == _selectedDay &&
+          event.startDateTime!.month == _currentMonth &&
+          event.startDateTime!.year == _currentYear;
+    }).toList();
+  }
+
   List<int?> get days => _buildDays();
 
   // Month statistics
@@ -203,6 +213,15 @@ class CalendarViewModel extends BaseViewModel {
           event.startDateTime!.year == _currentYear;
     });
     return currentMonthEvents.map((event) => event.petName).toSet().length;
+  }
+
+  int get completedEventsThisMonth {
+    return _events.where((event) {
+      if (event.startDateTime == null) return false;
+      return event.startDateTime!.month == _currentMonth &&
+          event.startDateTime!.year == _currentYear &&
+          event.isCompleted;
+    }).length;
   }
 
   List<CalendarEvent> get upcomingEventsList {
@@ -247,6 +266,15 @@ class CalendarViewModel extends BaseViewModel {
     notifyListeners();
   }
 
+  /// Jump the calendar selection to today.
+  void jumpToToday() {
+    final now = DateTime.now();
+    _selectedDay = now.day;
+    _currentMonth = now.month;
+    _currentYear = now.year;
+    notifyListeners();
+  }
+
   void onAddSchedulePressed(BuildContext context) {
     addSchedule(context);
   }
@@ -275,6 +303,18 @@ class CalendarViewModel extends BaseViewModel {
 
   void onOpenSelectedEventPressed(BuildContext context) {
     openSelectedEvent(context);
+  }
+
+  /// Open a specific event in the detail view.
+  Future<void> openEvent(BuildContext context, CalendarEvent event) async {
+    final result = await Navigator.push<Object>(
+      context,
+      MaterialPageRoute(builder: (_) => ScheduleDetailView(event: event)),
+    );
+    if (result == true || result is CalendarEvent) {
+      await fetchSchedules();
+      notifyListeners();
+    }
   }
 
   Future<void> openSelectedEvent(BuildContext context) async {

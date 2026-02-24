@@ -27,156 +27,268 @@ class _EditPetBody extends StatelessWidget {
     final viewModel = context.watch<EditPetViewModel>();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
+        leading: Padding(
+          padding: const EdgeInsets.all(8),
+          child: CircleAvatar(
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
         ),
-        title: const Text(
+        title: Text(
           'Edit Pet Details',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
+          style: textTheme.titleMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
         actions: [
-          TextButton(
-            onPressed: viewModel.hasChanges
-                ? () => viewModel.saveChanges(context)
-                : null,
-            child: Text(
-              'Save',
-              style: TextStyle(
-                color: viewModel.hasChanges
-                    ? colorScheme.primary
-                    : Colors.grey.shade400,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton(
+              onPressed: viewModel.hasChanges
+                  ? () => viewModel.saveChanges(context)
+                  : null,
+              child: Text(
+                'Save',
+                style: TextStyle(
+                  color: viewModel.hasChanges
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.45),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- Profile Image Section ---
-            Center(
-              child: Stack(
-                children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8DEF8),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colorScheme.primary.withValues(alpha: 0.3),
-                        width: 3,
-                      ),
-                      image: viewModel.profilePhotoFile != null
-                          ? DecorationImage(
-                              image: FileImage(viewModel.profilePhotoFile!),
-                              fit: BoxFit.cover,
-                            )
-                          : (viewModel.selectedGalleryUrl != null &&
-                                viewModel.selectedGalleryUrl!.isNotEmpty)
-                          ? DecorationImage(
-                              image: NetworkImage(
-                                viewModel.selectedGalleryUrl!,
-                              ),
-                              fit: BoxFit.cover,
-                            )
-                          : (viewModel.pet.photoUrl != null &&
-                                viewModel.pet.photoUrl!.isNotEmpty)
-                          ? DecorationImage(
-                              image: NetworkImage(viewModel.pet.photoUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child:
-                        viewModel.profilePhotoFile == null &&
-                            (viewModel.selectedGalleryUrl == null ||
-                                viewModel.selectedGalleryUrl!.isEmpty) &&
-                            (viewModel.pet.photoUrl == null ||
-                                viewModel.pet.photoUrl!.isEmpty)
-                        ? Icon(Icons.pets, size: 50, color: colorScheme.primary)
-                        : null,
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: () => _showPhotoOptions(context, viewModel),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
+            GestureDetector(
+              onTap: () => _showPhotoOptions(context, viewModel),
+              child: Container(
+                width: double.infinity,
+                height: 280,
+                color: Colors.white,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (viewModel.profilePhotoFile != null)
+                      Image.file(
+                        viewModel.profilePhotoFile!,
+                        fit: BoxFit.contain,
+                      )
+                    else if (viewModel.selectedGalleryUrl != null &&
+                        viewModel.selectedGalleryUrl!.isNotEmpty)
+                      Image.network(
+                        viewModel.selectedGalleryUrl!,
+                        fit: BoxFit.contain,
+                      )
+                    else if (viewModel.pet.photoUrl != null &&
+                        viewModel.pet.photoUrl!.isNotEmpty)
+                      Image.network(
+                        viewModel.pet.photoUrl!,
+                        fit: BoxFit.contain,
+                      )
+                    else
+                      Container(
                         decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 18,
-                          color: Colors.white,
+                          gradient: LinearGradient(
+                            colors: [
+                              colorScheme.primary,
+                              colorScheme.primary.withValues(alpha: 0.7),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
                         ),
                       ),
+                    // Overlay scrim
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.35),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                    // Edit icon + text
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 36,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Tap to change photo',
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // --- Form body ---
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Section: Basic Info
+                  _SectionCard(
+                    title: 'Basic information',
+                    icon: Icons.info_outline_rounded,
+                    children: [
+                      _StyledTextField(
+                        controller: viewModel.nameController,
+                        label: 'Pet name',
+                        hint: viewModel.pet.name,
+                        icon: Icons.badge_outlined,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _ReadOnlyField(
+                              label: 'Species',
+                              value: viewModel.species,
+                              icon: Icons.pets_outlined,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: _ReadOnlyField(
+                              label: 'Gender',
+                              value: viewModel.gender,
+                              icon: Icons.wc_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _BreedDropdown(viewModel: viewModel),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Section: Appearance & Health
+                  _SectionCard(
+                    title: 'Appearance & Health',
+                    icon: Icons.monitor_heart_outlined,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _StyledTextField(
+                              controller: viewModel.colourController,
+                              label: 'Colour',
+                              hint: viewModel.pet.colour ?? 'e.g. Golden',
+                              icon: Icons.palette_outlined,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: _StyledTextField(
+                              controller: viewModel.weightController,
+                              label: 'Weight (kg)',
+                              hint: 'e.g. 12.5',
+                              icon: Icons.monitor_weight_outlined,
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 4,
+                        shadowColor: colorScheme.primary.withValues(
+                          alpha: 0.35,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        disabledBackgroundColor: Colors.grey.shade300,
+                      ),
+                      onPressed: viewModel.hasChanges
+                          ? () => viewModel.saveChanges(context)
+                          : null,
+                      child: viewModel.isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.check_rounded, size: 22),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Save Changes',
+                                  style: textTheme.titleMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-
-            // --- Form Fields ---
-            _buildTextField(
-              label: 'Pet Name',
-              controller: viewModel.nameController,
-              icon: Icons.pets,
-            ),
-            const SizedBox(height: 20),
-
-            _buildReadOnlyField(
-              label: 'Species',
-              value: viewModel.species,
-              icon: Icons.category,
-            ),
-            const SizedBox(height: 20),
-
-            _buildBreedDropdown(context, viewModel: viewModel),
-            const SizedBox(height: 20),
-
-            _buildTextField(
-              label: 'Colour',
-              controller: viewModel.colourController,
-              icon: Icons.palette_outlined,
-            ),
-            const SizedBox(height: 20),
-
-            _buildTextField(
-              label: 'Weight',
-              controller: viewModel.weightController,
-              icon: Icons.monitor_weight_outlined,
-              suffix: 'kg',
-            ),
-            const SizedBox(height: 20),
-
-            _buildReadOnlyField(
-              label: 'Gender',
-              value: viewModel.gender,
-              icon: Icons.wc_outlined,
-            ),
-            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -303,144 +415,175 @@ class _EditPetBody extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildBreedDropdown(
-    BuildContext context, {
-    required EditPetViewModel viewModel,
-  }) {
+// ────────────────────────────────────────────────────────────────
+// Reusable internal widgets – mirrors add_pet_view.dart styling
+// ────────────────────────────────────────────────────────────────
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final List<Widget> children;
+
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: colorScheme.primary),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _StyledTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String? hint;
+  final IconData icon;
+  final TextInputType? keyboardType;
+
+  const _StyledTextField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.hint,
+    this.keyboardType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        labelStyle: TextStyle(
+          color: Colors.grey.shade500,
+          fontWeight: FontWeight.w500,
+          fontSize: 13,
+        ),
+        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+        prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 20),
+        filled: true,
+        fillColor: const Color(0xFFF5F7FA),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReadOnlyField extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _ReadOnlyField({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Breed',
+        Text(
+          label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
+            color: Colors.grey.shade600,
           ),
         ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<BreedOption>(
-          initialValue: viewModel.selectedBreed,
-          decoration: InputDecoration(
-            prefixIcon: Icon(
-              Icons.info_outline,
-              color: Colors.grey.shade500,
-              size: 22,
-            ),
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade200),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade200),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colorScheme.primary, width: 2),
-            ),
+        const SizedBox(height: 6),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEEFF2),
+            borderRadius: BorderRadius.circular(14),
           ),
-          icon: Icon(Icons.arrow_drop_down, color: colorScheme.primary),
-          items: viewModel.breeds
-              .map(
-                (breed) =>
-                    DropdownMenuItem(value: breed, child: Text(breed.name)),
-              )
-              .toList(),
-          onChanged: viewModel.setSelectedBreed,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReadOnlyField({
-    required String label,
-    required String value,
-    required IconData icon,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: TextEditingController(text: value),
-          enabled: false,
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Colors.grey.shade500, size: 22),
-            filled: true,
-            fillColor: Colors.grey.shade100,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade200),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade200),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade200),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    String? suffix,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Colors.grey.shade500, size: 22),
-            suffixText: suffix,
-            suffixStyle: TextStyle(
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
-            ),
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade200),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade200),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFF7165E3), width: 2),
-            ),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.grey.shade400, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -448,4 +591,67 @@ class _EditPetBody extends StatelessWidget {
   }
 }
 
-// --- Gender Option Widget ---
+class _BreedDropdown extends StatelessWidget {
+  final EditPetViewModel viewModel;
+  const _BreedDropdown({required this.viewModel});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final breeds = viewModel.breeds;
+
+    return DropdownButtonFormField<BreedOption>(
+      // ignore: deprecated_member_use
+      initialValue: viewModel.selectedBreed,
+      decoration: InputDecoration(
+        labelText: 'Breed',
+        labelStyle: TextStyle(
+          color: Colors.grey.shade500,
+          fontWeight: FontWeight.w500,
+          fontSize: 13,
+        ),
+        prefixIcon: Icon(
+          Icons.category_outlined,
+          color: Colors.grey.shade400,
+          size: 20,
+        ),
+        filled: true,
+        fillColor: const Color(0xFFF5F7FA),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: colorScheme.error, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: colorScheme.error, width: 1.5),
+        ),
+      ),
+      isExpanded: true,
+      icon: Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: colorScheme.primary,
+        size: 22,
+      ),
+      items: breeds
+          .map((b) => DropdownMenuItem(value: b, child: Text(b.name)))
+          .toList(),
+      onChanged: viewModel.setSelectedBreed,
+    );
+  }
+}

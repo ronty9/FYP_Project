@@ -6,9 +6,26 @@ enum MessageType { error, success, info, warning }
 abstract class BaseViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
+  bool _disposed = false;
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  /// Whether this ViewModel has been disposed.
+  bool get disposed => _disposed;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
+  }
 
   void setLoading(bool value) {
     if (_isLoading == value) return;

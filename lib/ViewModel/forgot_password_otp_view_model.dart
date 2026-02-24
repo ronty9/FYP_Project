@@ -34,10 +34,7 @@ class ForgotPasswordOtpViewModel extends ChangeNotifier {
   int get resendCountdown => _resendCountdown;
   bool get canResend => _canResend;
 
-  ForgotPasswordOtpViewModel({
-    required this.email,
-    required this.userName,
-  }) {
+  ForgotPasswordOtpViewModel({required this.email, required this.userName}) {
     _startResendCountdown();
   }
 
@@ -116,17 +113,20 @@ class ForgotPasswordOtpViewModel extends ChangeNotifier {
           break;
 
         case 'expired':
-          _errorMessage = 'Verification code has expired. Please request a new one.';
+          _errorMessage =
+              'Verification code has expired. Please request a new one.';
           notifyListeners();
           break;
 
         case 'too_many_attempts':
-          _errorMessage = 'Too many failed attempts. Please request a new code.';
+          _errorMessage =
+              'Too many failed attempts. Please request a new code.';
           notifyListeners();
           break;
 
         case 'not_found':
-          _errorMessage = 'Verification code not found. Please request a new one.';
+          _errorMessage =
+              'Verification code not found. Please request a new one.';
           notifyListeners();
           break;
 

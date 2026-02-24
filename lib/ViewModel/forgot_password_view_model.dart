@@ -69,10 +69,8 @@ class ForgotPasswordViewModel extends ChangeNotifier {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ForgotPasswordOtpView(
-              email: email,
-              userName: userName,
-            ),
+            builder: (context) =>
+                ForgotPasswordOtpView(email: email, userName: userName),
           ),
         );
       }

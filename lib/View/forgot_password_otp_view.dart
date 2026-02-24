@@ -16,10 +16,8 @@ class ForgotPasswordOtpView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ForgotPasswordOtpViewModel(
-        email: email,
-        userName: userName,
-      ),
+      create: (_) =>
+          ForgotPasswordOtpViewModel(email: email, userName: userName),
       child: const _ForgotPasswordOtpContent(),
     );
   }
@@ -88,10 +86,7 @@ class _ForgotPasswordOtpContent extends StatelessWidget {
                 Text(
                   'We\'ve sent a 6-digit verification code to',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -335,9 +330,7 @@ class _OtpInputField extends StatelessWidget {
           fontWeight: FontWeight.bold,
           color: colorScheme.primary,
         ),
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-        ],
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         decoration: InputDecoration(
           counterText: '',
           filled: true,

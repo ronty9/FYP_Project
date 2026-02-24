@@ -3,8 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 // Ensure these imports point to your actual files
+import '../models/pet_info.dart';
 import '../ViewModel/home_dashboard_view_model.dart';
 import '../ViewModel/home_view_model.dart';
+import 'pet_detail_view.dart';
+import 'schedule_detail_view.dart';
 
 class HomeDashboardView extends StatelessWidget {
   const HomeDashboardView({super.key});
@@ -28,157 +31,188 @@ class _HomeDashboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final dashboardViewModel = context.watch<HomeDashboardViewModel>();
 
     return Container(
-      color: const Color(0xFFF5F7FA),
+      color: theme.scaffoldBackgroundColor,
       child: SafeArea(
         bottom: false,
         child: dashboardViewModel.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
+            ? Center(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // --- Gradient Header ---
-                    _buildHeader(
-                      context,
-                      colorScheme,
-                      textTheme,
-                      dashboardViewModel,
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Loading your dashboard...',
+                      style: textTheme.bodyMedium,
                     ),
+                  ],
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: dashboardViewModel.refreshDashboard,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      // --- Gradient Header ---
+                      _buildHeader(
+                        context,
+                        colorScheme,
+                        textTheme,
+                        dashboardViewModel,
+                      ),
 
-                    const SizedBox(height: 70),
+                      const SizedBox(height: 70),
 
-                    // --- Main Content ---
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // --- Upcoming Card ---
-                          const _SectionHeader(
-                            title: 'Upcoming',
-                            icon: Icons.event_note,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildUpcomingCard(
-                            context,
-                            colorScheme,
-                            dashboardViewModel,
-                          ),
+                      // --- Main Content ---
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // --- Upcoming Card ---
+                            const _SectionHeader(
+                              title: 'Upcoming',
+                              icon: Icons.event_note,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildUpcomingCard(
+                              context,
+                              colorScheme,
+                              dashboardViewModel,
+                            ),
 
-                          const SizedBox(height: 28),
+                            const SizedBox(height: 28),
 
-                          // --- Your Pets (DYNAMIC) ---
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const _SectionHeader(
-                                title: 'Your Pets',
-                                icon: Icons.pets,
-                              ),
-                              GestureDetector(
-                                onTap: () =>
-                                    dashboardViewModel.openPetsList(context),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
+                            // --- Your Pets (DYNAMIC) ---
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const _SectionHeader(
+                                  title: 'Your Pets',
+                                  icon: Icons.pets,
+                                ),
+                                GestureDetector(
+                                  onTap: () => dashboardViewModel.openPetsList(
+                                    context,
+                                    homeViewModel,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.primary.withValues(
-                                      alpha: 0.1,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
                                     ),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        'View all',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.primary.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          'View all',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: colorScheme.primary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          size: 12,
                                           color: colorScheme.primary,
                                         ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+
+                            if (dashboardViewModel.pets.isEmpty)
+                              _buildEmptyPetsState(context, dashboardViewModel)
+                            else
+                              SizedBox(
+                                height: 200,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: dashboardViewModel.pets.length,
+                                  itemBuilder: (context, index) {
+                                    final pet = dashboardViewModel.pets[index];
+                                    final colors = _getPetCardColors(index);
+                                    return _PetHomeCard(
+                                      pet: pet,
+                                      colors: colors,
+                                      onTap: () => _openPetDetail(
+                                        context,
+                                        pet,
+                                        dashboardViewModel,
                                       ),
-                                      const SizedBox(width: 4),
-                                      Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        size: 12,
-                                        color: colorScheme.primary,
-                                      ),
-                                    ],
+                                    );
+                                  },
+                                ),
+                              ),
+
+                            const SizedBox(height: 28),
+
+                            // --- Community Tips (DYNAMIC) ---
+                            const _SectionHeader(
+                              title: 'Community Tips',
+                              icon: Icons.local_library_outlined,
+                            ),
+                            const SizedBox(height: 12),
+
+                            if (dashboardViewModel.randomTips.isEmpty)
+                              _buildEmptyTipsState(context)
+                            else ...[
+                              SizedBox(
+                                height: 180,
+                                child: PageView.builder(
+                                  controller:
+                                      dashboardViewModel.tipPageController,
+                                  itemCount:
+                                      dashboardViewModel.randomTips.length,
+                                  itemBuilder: (context, index) {
+                                    final tip =
+                                        dashboardViewModel.randomTips[index];
+                                    return _CommunityTipCard(
+                                      tip: tip,
+                                      onTap: () => _showTipDetail(context, tip),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Center(
+                                child: SmoothPageIndicator(
+                                  controller:
+                                      dashboardViewModel.tipPageController,
+                                  count: dashboardViewModel.randomTips.length,
+                                  effect: ExpandingDotsEffect(
+                                    dotHeight: 8,
+                                    dotWidth: 8,
+                                    activeDotColor: colorScheme.primary,
+                                    dotColor: Colors.grey.shade300,
+                                    expansionFactor: 3,
                                   ),
                                 ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 14),
-
-                          if (dashboardViewModel.pets.isEmpty)
-                            _buildEmptyPetsState(context, dashboardViewModel)
-                          else
-                            SizedBox(
-                              height: 185,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: dashboardViewModel.pets.length,
-                                itemBuilder: (context, index) {
-                                  final pet = dashboardViewModel.pets[index];
-                                  final colors = _getPetCardColors(index);
-                                  return _PetHomeCard(pet: pet, colors: colors);
-                                },
-                              ),
-                            ),
-
-                          const SizedBox(height: 28),
-
-                          // --- Community Tips (DYNAMIC) ---
-                          const _SectionHeader(
-                            title: 'Community Tips',
-                            icon: Icons.local_library_outlined,
-                          ),
-                          const SizedBox(height: 12),
-
-                          if (dashboardViewModel.randomTips.isEmpty)
-                            const Center(child: Text("No tips found."))
-                          else ...[
-                            SizedBox(
-                              height: 180,
-                              child: PageView.builder(
-                                controller:
-                                    dashboardViewModel.tipPageController,
-                                itemCount: dashboardViewModel.randomTips.length,
-                                itemBuilder: (context, index) {
-                                  final tip =
-                                      dashboardViewModel.randomTips[index];
-                                  return _CommunityTipCard(tip: tip);
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Center(
-                              child: SmoothPageIndicator(
-                                controller:
-                                    dashboardViewModel.tipPageController,
-                                count: dashboardViewModel.randomTips.length,
-                                effect: ExpandingDotsEffect(
-                                  dotHeight: 8,
-                                  dotWidth: 8,
-                                  activeDotColor: colorScheme.primary,
-                                  dotColor: Colors.grey.shade300,
-                                  expansionFactor: 3,
-                                ),
-                              ),
-                            ),
+                            const SizedBox(height: 20),
                           ],
-                          const SizedBox(height: 20),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
       ),
@@ -244,53 +278,61 @@ class _HomeDashboardContent extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.5),
-                              width: 2,
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 22,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.2,
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Welcome back,',
-                              style: textTheme.bodySmall?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.85),
-                                fontSize: 13,
+                    GestureDetector(
+                      onTap: () => homeViewModel?.goToProfileTab(),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                width: 2,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'PetOwner 👋',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                            child: CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.2,
                               ),
+                              backgroundImage: vm.profileImageUrl != null
+                                  ? NetworkImage(vm.profileImageUrl!)
+                                  : null,
+                              child: vm.profileImageUrl == null
+                                  ? const Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                      size: 24,
+                                    )
+                                  : null,
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Welcome back,',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${vm.userName} 👋',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     Container(
                       decoration: BoxDecoration(
@@ -383,88 +425,93 @@ class _HomeDashboardContent extends StatelessWidget {
     ColorScheme colorScheme,
     HomeDashboardViewModel vm,
   ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colorScheme.primary.withValues(alpha: 0.08), Colors.white],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.15)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.primary.withValues(alpha: 0.15),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.calendar_today_rounded,
-              color: colorScheme.primary,
-              size: 26,
-            ),
+    return GestureDetector(
+      onTap: () => _openUpcomingSchedule(context, vm),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [colorScheme.primary.withValues(alpha: 0.08), Colors.white],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: colorScheme.primary.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    "Today's Focus",
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.w600,
+                ],
+              ),
+              child: Icon(
+                Icons.calendar_today_rounded,
+                color: colorScheme.primary,
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      "Today's Focus",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  vm.upcomingItem,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3142),
+                  const SizedBox(height: 6),
+                  Text(
+                    vm.upcomingItem,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3142),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: colorScheme.primary,
+              ),
             ),
-            child: Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 16,
-              color: colorScheme.primary,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -501,6 +548,33 @@ class _HomeDashboardContent extends StatelessWidget {
     );
   }
 
+  Widget _buildEmptyTipsState(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, color: colorScheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'No community tips available right now.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<Color> _getPetCardColors(int index) {
     final colorSets = [
       [const Color(0xFF667EEA), const Color(0xFF764BA2)],
@@ -510,6 +584,124 @@ class _HomeDashboardContent extends StatelessWidget {
       [const Color(0xFF4568DC), const Color(0xFFB06AB3)],
     ];
     return colorSets[index % colorSets.length];
+  }
+
+  void _openPetDetail(
+    BuildContext context,
+    PetHomeInfo pet,
+    HomeDashboardViewModel vm,
+  ) {
+    final petInfo = PetInfo(
+      id: pet.id,
+      name: pet.name,
+      species: pet.speciesRaw,
+      breed: pet.species, // display subtitle is the breed name
+      age: pet.age,
+      gender: pet.gender,
+      colour: pet.colour,
+      dateOfBirth: pet.dateOfBirth,
+      breedId: pet.breedId,
+      userId: pet.userId,
+      photoUrl: pet.photoUrl,
+      photoUrls: pet.photoUrls,
+      weightKg: pet.weightKg,
+      galleryImages: pet.galleryImages,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => PetDetailView(pet: petInfo)),
+    ).then((_) => vm.refreshDashboard());
+  }
+
+  void _openUpcomingSchedule(BuildContext context, HomeDashboardViewModel vm) {
+    final event = vm.upcomingEvent;
+    if (event != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ScheduleDetailView(event: event)),
+      ).then((_) => vm.refreshDashboard());
+    } else {
+      // No specific event, go to calendar tab
+      homeViewModel?.goToCalendarTab();
+    }
+  }
+
+  void _showTipDetail(BuildContext context, CommunityTip tip) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(ctx).size.height * 0.55,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  tip.category,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                tip.title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D3142),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                tip.description,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey.shade700,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -522,16 +714,18 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Row(
       children: [
-        Icon(icon, size: 20, color: const Color(0xFF2D3142)),
+        Icon(icon, size: 20, color: colorScheme.onSurface),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 17,
+          style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3142),
+            color: colorScheme.onSurface,
           ),
         ),
       ],
@@ -597,81 +791,205 @@ class _QuickActionButton extends StatelessWidget {
 class _PetHomeCard extends StatelessWidget {
   final PetHomeInfo pet;
   final List<Color> colors;
+  final VoidCallback? onTap;
 
-  const _PetHomeCard({required this.pet, required this.colors});
+  const _PetHomeCard({required this.pet, required this.colors, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 145,
-      margin: const EdgeInsets.only(right: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: colors.first.withValues(alpha: 0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Gradient header with age badge
-          Stack(
-            children: [
-              Container(
-                height: 80,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: colors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(22),
-                    topRight: Radius.circular(22),
-                  ),
+    final hasPhoto = pet.photoUrl != null && pet.photoUrl!.isNotEmpty;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 150,
+        margin: const EdgeInsets.only(right: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: colors.first.withValues(alpha: 0.18),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Gradient top background
+            Container(
+              height: 70,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: colors,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(22),
+                  topRight: Radius.circular(22),
+                ),
+              ),
+              // Subtle decorative circles
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -12,
+                    right: -12,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -8,
+                    left: -8,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content below the avatar
+            Positioned.fill(
+              top: 90,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  children: [
+                    // Pet name
+                    Text(
+                      pet.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: Color(0xFF2D3142),
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 5),
+                    // Breed badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.first.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        pet.species,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: colors.first,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.pets,
-                      color: Colors.white,
-                      size: 32,
+                    const Spacer(),
+                    // Bottom row: last scan
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.camera_alt_outlined,
+                            size: 11,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              pet.lastScan,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey.shade500,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Floating avatar (overlapping gradient and content)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 32,
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.first.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: 28,
+                    backgroundColor: colors.first.withValues(alpha: 0.2),
+                    backgroundImage: hasPhoto
+                        ? NetworkImage(pet.photoUrl!)
+                        : null,
+                    child: !hasPhoto
+                        ? Icon(
+                            Icons.pets_rounded,
+                            color: Colors.white,
+                            size: 26,
+                          )
+                        : null,
                   ),
                 ),
               ),
-              // Age badge
+            ),
+
+            // Age badge (top-right corner)
+            if (pet.age.isNotEmpty)
               Positioned(
                 top: 8,
                 right: 8,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 7,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -681,81 +999,25 @@ class _PetHomeCard extends StatelessWidget {
                     pet.age,
                     style: TextStyle(
                       fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       color: colors.first,
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
-          // Info section
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        pet.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: Color(0xFF2D3142),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.first.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          pet.species,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.first,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Last scan info
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.camera_alt_outlined,
-                        size: 12,
-                        color: Colors.grey.shade500,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          pet.lastScan,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey.shade600,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+
+            // Chevron indicator (bottom-right)
+            Positioned(
+              bottom: 10,
+              right: 10,
+              child: Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 12,
+                color: colors.first.withValues(alpha: 0.35),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -763,9 +1025,10 @@ class _PetHomeCard extends StatelessWidget {
 
 // --- Community Tip Card Widget ---
 class _CommunityTipCard extends StatelessWidget {
-  final CommunityTip tip; // Accepts the Model from ViewModel
+  final CommunityTip tip;
+  final VoidCallback? onTap;
 
-  const _CommunityTipCard({required this.tip});
+  const _CommunityTipCard({required this.tip, this.onTap});
 
   // Helper Logic moved inside widget to auto-style based on category string
   Color _getCategoryColor(String category) {
@@ -809,95 +1072,101 @@ class _CommunityTipCard extends StatelessWidget {
     final icon = _getCategoryIcon(tip.category);
     final gradient = [iconColor.withValues(alpha: 0.1), Colors.white];
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: iconColor.withValues(alpha: 0.2), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: iconColor.withValues(alpha: 0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: gradient,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: iconColor.withValues(alpha: 0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: iconColor, size: 24),
-              ),
-              const SizedBox(width: 12),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    tip.category,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: iconColor,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: iconColor.withValues(alpha: 0.2),
+            width: 1.5,
           ),
-          const SizedBox(height: 12),
-          Text(
-            tip.title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2D3142),
+          boxShadow: [
+            BoxShadow(
+              color: iconColor.withValues(alpha: 0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 6),
-          Flexible(
-            child: Text(
-              tip.description,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade700,
-                height: 1.4,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: iconColor.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: iconColor, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      tip.category,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: iconColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              tip.title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2D3142),
               ),
-              maxLines: 3,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            Flexible(
+              child: Text(
+                tip.description,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade700,
+                  height: 1.4,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

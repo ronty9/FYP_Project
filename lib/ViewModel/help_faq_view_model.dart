@@ -175,8 +175,9 @@ class HelpFaqViewModel extends BaseViewModel {
                   item.answer.toLowerCase().contains(lowerQuery);
             }).toList();
 
-            if (matchingItems.isEmpty)
+            if (matchingItems.isEmpty) {
               return null; // Drop category if no matches
+            }
 
             // Return a copy of the category with ONLY matching items
             return FaqCategory(

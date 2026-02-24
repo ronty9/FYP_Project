@@ -78,13 +78,14 @@ class ResetPasswordViewModel extends ChangeNotifier {
           .collection('pending_password_resets')
           .doc(docId)
           .set({
-        'email': _email,
-        'requestedPassword': newPassword, // Store securely/hash in production!
-        'createdAt': FieldValue.serverTimestamp(),
-        'expiresAt': DateTime.now().add(const Duration(hours: 1)),
-        'used': false,
-        'verifiedViaOTP': true,
-      });
+            'email': _email,
+            'requestedPassword':
+                newPassword, // Store securely/hash in production!
+            'createdAt': FieldValue.serverTimestamp(),
+            'expiresAt': DateTime.now().add(const Duration(hours: 1)),
+            'used': false,
+            'verifiedViaOTP': true,
+          });
 
       // 3. Send Firebase Auth password reset email
       // User will click this link to complete the password reset

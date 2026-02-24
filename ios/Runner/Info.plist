@@ -8,6 +8,12 @@
 	<string>This app needs photo library access to select images of your pet for analysis.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app may need microphone access for camera functionality.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app connects to a local AI server on your network for pet breed analysis.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
