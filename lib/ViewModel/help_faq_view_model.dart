@@ -148,7 +148,7 @@ class HelpFaqViewModel extends BaseViewModel {
       // Initially, filtered list is the same as the master list
       _filteredCategories = List.from(_allCategories);
     } catch (e) {
-      print("Error fetching FAQs: $e");
+      debugPrint("Error fetching FAQs: $e");
     }
 
     _isLoading = false;

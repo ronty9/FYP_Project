@@ -79,9 +79,11 @@ class AdminFeedbackDetailViewModel extends BaseViewModel {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error replying: $e')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error replying: $e')));
+      }
     }
   }
 
@@ -104,7 +106,7 @@ class AdminFeedbackDetailViewModel extends BaseViewModel {
         );
       }
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
     }
   }
 
@@ -125,7 +127,7 @@ class AdminFeedbackDetailViewModel extends BaseViewModel {
         Navigator.pop(context); // Go back to list
       }
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
     }
   }
 

@@ -123,7 +123,7 @@ class CalendarViewModel extends BaseViewModel {
               petName = petDoc.data()?['petName'] ?? '';
             }
           } catch (e) {
-            print('Error fetching pet name: $e');
+            debugPrint('Error fetching pet name: $e');
           }
         }
 
@@ -152,7 +152,7 @@ class CalendarViewModel extends BaseViewModel {
         return a.startDateTime!.compareTo(b.startDateTime!);
       });
     } catch (e) {
-      print('Error fetching schedules: $e');
+      debugPrint('Error fetching schedules: $e');
     }
 
     _isLoadingSchedules = false;

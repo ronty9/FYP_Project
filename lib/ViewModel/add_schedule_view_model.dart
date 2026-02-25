@@ -298,7 +298,7 @@ class AddScheduleViewModel extends BaseViewModel {
         scheduledTime: reminderDateTime,
       );
     } catch (e) {
-      print('Error scheduling notification: $e');
+      debugPrint('Error scheduling notification: $e');
     }
   }
 

@@ -39,7 +39,7 @@ class AdminDashboardViewModel extends BaseViewModel {
 
       _scanCount = scanSnapshot.count ?? 0;
     } catch (e) {
-      print("Error fetching stats: $e");
+      debugPrint("Error fetching stats: $e");
     }
 
     _isLoadingStats = false;

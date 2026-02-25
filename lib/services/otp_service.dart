@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -41,13 +42,13 @@ class OtpService {
       final emailSent = await _sendEmailViaSendGrid(email, userName, otp);
 
       if (!emailSent) {
-        print('Failed to send OTP email via SendGrid');
+        debugPrint('Failed to send OTP email via SendGrid');
         return null;
       }
 
       return otp; // Return OTP for development/testing purposes
     } catch (e) {
-      print('Error sending OTP: $e');
+      debugPrint('Error sending OTP: $e');
       return null;
     }
   }
@@ -59,8 +60,8 @@ class OtpService {
     String otp,
   ) async {
     if (_sendGridApiKey == 'YOUR_SENDGRID_API_KEY_HERE') {
-      print('⚠️ WARNING: SendGrid API key not configured!');
-      print('OTP Code (for testing): $otp');
+      debugPrint('⚠️ WARNING: SendGrid API key not configured!');
+      debugPrint('OTP Code (for testing): $otp');
       // For development, return true to allow testing without SendGrid
       return true;
     }
@@ -89,14 +90,16 @@ class OtpService {
       );
 
       if (response.statusCode == 202) {
-        print('✅ Email sent successfully to $toEmail');
+        debugPrint('✅ Email sent successfully to $toEmail');
         return true;
       } else {
-        print('❌ SendGrid error: ${response.statusCode} - ${response.body}');
+        debugPrint(
+          '❌ SendGrid error: ${response.statusCode} - ${response.body}',
+        );
         return false;
       }
     } catch (e) {
-      print('❌ Error calling SendGrid API: $e');
+      debugPrint('❌ Error calling SendGrid API: $e');
       return false;
     }
   }
@@ -232,7 +235,7 @@ class OtpService {
         return 'invalid';
       }
     } catch (e) {
-      print('Error verifying OTP: $e');
+      debugPrint('Error verifying OTP: $e');
       return 'error';
     }
   }
@@ -255,7 +258,7 @@ class OtpService {
       final newOTP = await sendOTP(email, userName);
       return newOTP != null;
     } catch (e) {
-      print('Error resending OTP: $e');
+      debugPrint('Error resending OTP: $e');
       return false;
     }
   }
@@ -272,9 +275,9 @@ class OtpService {
         await doc.reference.delete();
       }
 
-      print('Cleaned up ${expiredOTPs.docs.length} expired OTPs');
+      debugPrint('Cleaned up ${expiredOTPs.docs.length} expired OTPs');
     } catch (e) {
-      print('Error cleaning up OTPs: $e');
+      debugPrint('Error cleaning up OTPs: $e');
     }
   }
 }

@@ -120,7 +120,7 @@ class FeedbackViewModel extends BaseViewModel {
     } catch (e) {
       _isLoading = false;
       notifyListeners();
-      print("Error submitting feedback: $e");
+      debugPrint("Error submitting feedback: $e");
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,

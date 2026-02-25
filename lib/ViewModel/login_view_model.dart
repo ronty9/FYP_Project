@@ -120,12 +120,13 @@ class LoginViewModel extends ChangeNotifier {
       String errorMsg = 'Login failed. Please try again.';
       if (e.code == 'user-not-found') {
         errorMsg = 'No user found for that email.';
-      } else if (e.code == 'wrong-password')
+      } else if (e.code == 'wrong-password') {
         errorMsg = 'Wrong password provided.';
-      else if (e.code == 'invalid-credential')
+      } else if (e.code == 'invalid-credential') {
         errorMsg = 'Invalid email or password.';
-      else if (e.code == 'user-disabled')
+      } else if (e.code == 'user-disabled') {
         errorMsg = 'This user account has been disabled.';
+      }
 
       setMessage(errorMsg, MessageType.error);
     } catch (e) {

@@ -32,7 +32,7 @@ class AiService {
   // Physical device   → your computer's local-network IP, e.g. 192.168.1.100
   //
   // Override [baseUrl] before calling [predictBreed] if needed.
-  static String baseUrl = 'http://192.168.0.13:8000';
+  static String baseUrl = 'http://192.168.0.2:8000';
 
   /// Send [imageFile] to the backend and return species + breed predictions.
   ///

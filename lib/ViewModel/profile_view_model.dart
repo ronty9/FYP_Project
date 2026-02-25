@@ -83,7 +83,7 @@ class ProfileViewModel extends BaseViewModel {
         _totalPets = petsSnapshot.docs.length;
       }
     } catch (e) {
-      print("Error fetching profile: $e");
+      debugPrint("Error fetching profile: $e");
       _userName = 'Error loading';
     }
 
@@ -151,9 +151,11 @@ class ProfileViewModel extends BaseViewModel {
         Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error logging out: $e')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error logging out: $e')));
+      }
     }
   }
 }

@@ -60,7 +60,7 @@ class ManageAccountsViewModel extends BaseViewModel {
       // Initialize filtered list with everything
       _filteredUsers = List.from(_allUsers);
     } catch (e) {
-      print("Error fetching users: $e");
+      debugPrint("Error fetching users: $e");
     }
 
     _isLoading = false;
@@ -120,7 +120,7 @@ class ManageAccountsViewModel extends BaseViewModel {
         );
       }
     } catch (e) {
-      print("Error deleting: $e");
+      debugPrint("Error deleting: $e");
     }
   }
 

@@ -134,7 +134,7 @@ class HomeDashboardViewModel extends BaseViewModel {
             }
             ageString = _calculateAge(dob);
           } catch (e) {
-            print("Error parsing date: $e");
+            debugPrint("Error parsing date: $e");
           }
         }
 
@@ -191,7 +191,7 @@ class HomeDashboardViewModel extends BaseViewModel {
         );
       }).toList();
     } catch (e) {
-      print("Error fetching pets: $e");
+      debugPrint("Error fetching pets: $e");
     }
   }
 
@@ -230,7 +230,7 @@ class HomeDashboardViewModel extends BaseViewModel {
         }
       }
     } catch (e) {
-      print("Error fetching random tips: $e");
+      debugPrint("Error fetching random tips: $e");
     }
   }
 

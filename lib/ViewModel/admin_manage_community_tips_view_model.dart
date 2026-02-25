@@ -58,7 +58,7 @@ class AdminManageCommunityTipsViewModel extends ChangeNotifier {
           .map((doc) => CommunityTip.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print("Error fetching tips: $e");
+      debugPrint("Error fetching tips: $e");
     }
 
     _isLoading = false;
@@ -137,7 +137,7 @@ class AdminManageCommunityTipsViewModel extends ChangeNotifier {
         );
       }
     } catch (e) {
-      print("Error adding tip: $e");
+      debugPrint("Error adding tip: $e");
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -186,7 +186,7 @@ class AdminManageCommunityTipsViewModel extends ChangeNotifier {
         );
       }
     } catch (e) {
-      print("Error updating tip: $e");
+      debugPrint("Error updating tip: $e");
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -234,7 +234,7 @@ class AdminManageCommunityTipsViewModel extends ChangeNotifier {
         );
       }
     } catch (e) {
-      print("Error deleting tip: $e");
+      debugPrint("Error deleting tip: $e");
     }
   }
 }

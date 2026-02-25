@@ -57,13 +57,13 @@ class AdminLoginViewModel extends BaseViewModel {
       final usernameInput = adminIdController.text.trim();
 
       // DEBUG PRINT 1: Check what the user typed
-      print("DEBUG: User typed username: $usernameInput");
+      debugPrint("DEBUG: User typed username: $usernameInput");
 
       // 1. Find Email associated with this Username
       final emailToLogin = await _getEmailFromUsername(usernameInput);
 
       // DEBUG PRINT 2: Check what email we found
-      print("DEBUG: Found email from database: $emailToLogin");
+      debugPrint("DEBUG: Found email from database: $emailToLogin");
 
       if (emailToLogin == null) {
         throw FirebaseAuthException(
@@ -112,24 +112,25 @@ class AdminLoginViewModel extends BaseViewModel {
       }
     } on FirebaseAuthException catch (e) {
       _isLoading = false;
-      print("DEBUG: Firebase Auth Error: ${e.code} - ${e.message}");
+      debugPrint("DEBUG: Firebase Auth Error: ${e.code} - ${e.message}");
 
       String msg = 'Login failed.';
       if (e.code == 'user-not-found') {
         msg = 'Username not found.';
-      } else if (e.code == 'wrong-password')
+      } else if (e.code == 'wrong-password') {
         msg = 'Incorrect password.';
-      else if (e.code == 'invalid-email')
+      } else if (e.code == 'invalid-email') {
         msg = 'System Error: Invalid email format retrieved.';
-      else if (e.code == 'invalid-credential')
+      } else if (e.code == 'invalid-credential') {
         msg = 'Invalid credentials.';
-      else if (e.message != null)
+      } else if (e.message != null) {
         msg = e.message!;
+      }
 
       setMessage(msg, MessageType.error);
     } catch (e) {
       _isLoading = false;
-      print("DEBUG: General Error: $e");
+      debugPrint("DEBUG: General Error: $e");
       setMessage('An error occurred: $e', MessageType.error);
     }
   }
@@ -149,7 +150,7 @@ class AdminLoginViewModel extends BaseViewModel {
         return email.trim();
       }
     } catch (e) {
-      print("DEBUG: Error in _getEmailFromUsername: $e");
+      debugPrint("DEBUG: Error in _getEmailFromUsername: $e");
     }
     return null;
   }
@@ -168,7 +169,7 @@ class AdminLoginViewModel extends BaseViewModel {
         return role == 'Admin';
       }
     } catch (e) {
-      print("DEBUG: Error verifying role: $e");
+      debugPrint("DEBUG: Error verifying role: $e");
     }
     return false;
   }

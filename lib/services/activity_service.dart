@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ActivityService {
-  static final CollectionReference _logsRef = 
-      FirebaseFirestore.instance.collection('system_activity_logs');
+  static final CollectionReference _logsRef = FirebaseFirestore.instance
+      .collection('system_activity_logs');
 
   // Log an event
   static Future<void> log({
@@ -20,7 +21,7 @@ class ActivityService {
         'timestamp': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      print("Failed to log activity: $e");
+      debugPrint("Failed to log activity: $e");
     }
   }
 }

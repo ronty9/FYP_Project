@@ -30,7 +30,7 @@ class AdminFeedbackViewModel extends BaseViewModel {
           .map((doc) => FeedbackModel.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print("Error fetching feedback: $e");
+      debugPrint("Error fetching feedback: $e");
     }
 
     _isLoading = false;

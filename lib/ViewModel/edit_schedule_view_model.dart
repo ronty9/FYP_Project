@@ -356,7 +356,7 @@ class EditScheduleViewModel extends BaseViewModel {
         );
       }
     } catch (e) {
-      print('Error updating notification: $e');
+      debugPrint('Error updating notification: $e');
     }
   }
 

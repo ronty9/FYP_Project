@@ -69,7 +69,7 @@ class AccountDetailsViewModel extends BaseViewModel {
             ?.toString();
       }
     } catch (e) {
-      print("Error loading account details: $e");
+      debugPrint("Error loading account details: $e");
     }
 
     _isLoading = false;

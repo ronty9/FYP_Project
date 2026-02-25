@@ -112,7 +112,7 @@ class ManageFAQViewModel extends BaseViewModel {
           .map((doc) => AdminFaqItem.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
-      print("Error fetching FAQs: $e");
+      debugPrint("Error fetching FAQs: $e");
     }
 
     _isLoading = false;
@@ -166,7 +166,7 @@ class ManageFAQViewModel extends BaseViewModel {
       // Refresh UI logic
       fetchFAQs();
     } catch (e) {
-      print("Error adding FAQ: $e");
+      debugPrint("Error adding FAQ: $e");
     }
   }
 
@@ -188,7 +188,7 @@ class ManageFAQViewModel extends BaseViewModel {
 
       fetchFAQs();
     } catch (e) {
-      print("Error editing FAQ: $e");
+      debugPrint("Error editing FAQ: $e");
     }
   }
 
@@ -200,7 +200,7 @@ class ManageFAQViewModel extends BaseViewModel {
       _faqs.removeWhere((f) => f.id == id);
       notifyListeners();
     } catch (e) {
-      print("Error deleting FAQ: $e");
+      debugPrint("Error deleting FAQ: $e");
     }
   }
 

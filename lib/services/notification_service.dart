@@ -79,7 +79,7 @@ class NotificationService {
 
     // Check if the scheduled time is in the future
     if (tzDateTime.isBefore(tz.TZDateTime.now(tz.local))) {
-      print('⚠️ Cannot schedule notification in the past: $scheduledTime');
+      debugPrint('⚠️ Cannot schedule notification in the past: $scheduledTime');
       return;
     }
 
@@ -109,7 +109,9 @@ class NotificationService {
       payload: scheduleId, // Pass the schedule ID as payload
     );
 
-    print('✅ Notification scheduled for $scheduledTime (ID: $notificationId)');
+    debugPrint(
+      '✅ Notification scheduled for $scheduledTime (ID: $notificationId)',
+    );
   }
 
   /// Cancel a scheduled notification
@@ -118,21 +120,21 @@ class NotificationService {
 
     final notificationId = _generateNotificationId(scheduleId);
     await _notifications.cancel(notificationId);
-    print('🗑️ Notification cancelled (ID: $notificationId)');
+    debugPrint('🗑️ Notification cancelled (ID: $notificationId)');
   }
 
   /// Cancel all scheduled notifications
   Future<void> cancelAllReminders() async {
     if (!_initialized) await initialize(null);
     await _notifications.cancelAll();
-    print('🗑️ All notifications cancelled');
+    debugPrint('🗑️ All notifications cancelled');
   }
 
   /// Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
     final payload = response.payload;
     if (payload != null && _navigatorKey?.currentContext != null) {
-      print('Notification tapped with schedule ID: $payload');
+      debugPrint('Notification tapped with schedule ID: $payload');
       _navigateToScheduleDetail(payload);
     }
   }
@@ -147,13 +149,13 @@ class NotificationService {
           .get();
 
       if (!scheduleDoc.exists) {
-        print('Schedule not found: $scheduleId');
+        debugPrint('Schedule not found: $scheduleId');
         return;
       }
 
       // Navigate to home with calendar tab selected
       final context = _navigatorKey?.currentContext;
-      if (context != null) {
+      if (context != null && context.mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/home',
@@ -162,7 +164,7 @@ class NotificationService {
         );
       }
     } catch (e) {
-      print('Error navigating to schedule: $e');
+      debugPrint('Error navigating to schedule: $e');
     }
   }
 
