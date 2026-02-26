@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -48,444 +49,25 @@ class _ScanResultBody extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
         children: [
-          // --- Gradient Header with Image ---
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 12,
-              left: 20,
-              right: 20,
-              bottom: 20,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [accentColor, accentColor.withValues(alpha: 0.75)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(32),
-                bottomRight: Radius.circular(32),
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_ios_new,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Text(
-                      'Scan Result',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.bookmark_border_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                // Image preview
-                Container(
-                  width: double.infinity,
-                  height: 180,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 3,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.file(viewModel.imageFile, fit: BoxFit.cover),
-                      Positioned(
-                        bottom: 12,
-                        left: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(typeIcon, size: 14, color: Colors.white),
-                              const SizedBox(width: 6),
-                              Text(
-                                typeLabel,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          // ── Gradient Header with Image ──
+          _ResultHeader(
+            accentColor: accentColor,
+            typeIcon: typeIcon,
+            typeLabel: typeLabel,
+            imageFile: viewModel.imageFile,
           ),
-          // --- Content ---
+
+          // ── Content ──
           if (viewModel.isLoading)
-            const Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text(
-                      'Analysing image…',
-                      style: TextStyle(fontSize: 15, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            )
+            _LoadingState(accentColor: accentColor)
           else if (viewModel.errorMessage != null)
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        size: 56,
-                        color: Colors.red.shade300,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Analysis failed',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        viewModel.errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back),
-                        label: const Text('Go back'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
+            _ErrorState(errorMessage: viewModel.errorMessage!)
           else
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Top Result Card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            accentColor.withValues(alpha: 0.12),
-                            accentColor.withValues(alpha: 0.05),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: accentColor.withValues(alpha: 0.3),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: accentColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              isDisease
-                                  ? Icons.check_circle_rounded
-                                  : Icons.pets_rounded,
-                              color: Colors.white,
-                              size: 32,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            viewModel.topPrediction?.label ?? '',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: accentColor,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: accentColor,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${viewModel.topConfidencePercent}% confidence',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // All Results Card
-                    _InfoCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary.withValues(
-                                    alpha: 0.12,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.analytics_outlined,
-                                  color: colorScheme.primary,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              const Text(
-                                'Analysis Results',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1A1A1A),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          ...viewModel.predictions.asMap().entries.map((entry) {
-                            final index = entry.key;
-                            final prediction = entry.value;
-                            final isTop = index == 0;
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom: index < viewModel.predictions.length - 1
-                                    ? 12
-                                    : 0,
-                              ),
-                              child: _PredictionRow(
-                                prediction: prediction,
-                                accentColor: isTop ? accentColor : Colors.grey,
-                                isTop: isTop,
-                              ),
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Details Card
-                    _InfoCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: accentColor.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.description_outlined,
-                                  color: accentColor,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Text(
-                                viewModel.detailsTitle,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1A1A1A),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            viewModel.summaryText,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade700,
-                              height: 1.6,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Warning Card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.amber.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              Icons.warning_amber_rounded,
-                              size: 20,
-                              color: Colors.amber.shade800,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Disclaimer',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.amber.shade900,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  viewModel.warningText,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.amber.shade800,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _ActionButton(
-                            icon: Icons.camera_alt_rounded,
-                            label: 'Scan Again',
-                            color: colorScheme.primary,
-                            onTap: () => Navigator.pop(context),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: _ActionButton(
-                            icon: Icons.home_rounded,
-                            label: 'Home',
-                            color: Colors.grey.shade600,
-                            isOutlined: true,
-                            onTap: () => Navigator.popUntil(
-                              context,
-                              (route) => route.isFirst,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
+            _ResultContent(
+              viewModel: viewModel,
+              colorScheme: colorScheme,
+              accentColor: accentColor,
+              isDisease: isDisease,
             ),
         ],
       ),
@@ -493,38 +75,698 @@ class _ScanResultBody extends StatelessWidget {
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  final Widget child;
-
-  const _InfoCard({required this.child});
+// ═══════════════════════════════════════════════════════════════════════════
+// Result Header
+// ═══════════════════════════════════════════════════════════════════════════
+class _ResultHeader extends StatelessWidget {
+  const _ResultHeader({
+    required this.accentColor,
+    required this.typeIcon,
+    required this.typeLabel,
+    required this.imageFile,
+  });
+  final Color accentColor;
+  final IconData typeIcon;
+  final String typeLabel;
+  final File imageFile;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 12,
+        left: 20,
+        right: 20,
+        bottom: 20,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accentColor,
+            accentColor.withValues(alpha: 0.8),
+            accentColor.withValues(alpha: 0.65),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Nav row
+          Row(
+            children: [
+              _HeaderIconButton(
+                icon: Icons.arrow_back_ios_new_rounded,
+                onTap: () => Navigator.pop(context),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Text(
+                  'Scan Result',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Image preview
+          Container(
+            width: double.infinity,
+            height: 170,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 2.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.file(imageFile, fit: BoxFit.cover),
+                // Bottom gradient
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 48,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.5),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 10,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(typeIcon, size: 13, color: Colors.white),
+                        const SizedBox(width: 6),
+                        Text(
+                          typeLabel,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(9),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+        ),
+        child: Icon(icon, color: Colors.white, size: 18),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Loading State
+// ═══════════════════════════════════════════════════════════════════════════
+class _LoadingState extends StatefulWidget {
+  const _LoadingState({required this.accentColor});
+  final Color accentColor;
+
+  @override
+  State<_LoadingState> createState() => _LoadingStateState();
+}
+
+class _LoadingStateState extends State<_LoadingState>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (_, child) {
+                return Transform.rotate(
+                  angle: _controller.value * 2 * math.pi,
+                  child: child,
+                );
+              },
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: SweepGradient(
+                    colors: [
+                      widget.accentColor.withValues(alpha: 0.1),
+                      widget.accentColor,
+                    ],
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF5F7FA),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Analysing image…',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This may take a few seconds',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Error State
+// ═══════════════════════════════════════════════════════════════════════════
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.errorMessage});
+  final String errorMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: Colors.red.shade400,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Analysis failed',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                errorMessage,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  label: const Text('Go back & try again'),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Result Content
+// ═══════════════════════════════════════════════════════════════════════════
+class _ResultContent extends StatelessWidget {
+  const _ResultContent({
+    required this.viewModel,
+    required this.colorScheme,
+    required this.accentColor,
+    required this.isDisease,
+  });
+  final ScanResultViewModel viewModel;
+  final ColorScheme colorScheme;
+  final Color accentColor;
+  final bool isDisease;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Result with Circular Gauge
+            _TopResultCard(
+              label: viewModel.topPrediction?.label ?? '',
+              confidence: viewModel.topPrediction?.confidence ?? 0,
+              accentColor: accentColor,
+              isDisease: isDisease,
+            ),
+            const SizedBox(height: 20),
+
+            // All Predictions
+            _SectionCard(
+              icon: Icons.analytics_outlined,
+              iconColor: colorScheme.primary,
+              title: 'Analysis Results',
+              child: Column(
+                children: viewModel.predictions.asMap().entries.map((entry) {
+                  final idx = entry.key;
+                  final prediction = entry.value;
+                  final isTop = idx == 0;
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      bottom: idx < viewModel.predictions.length - 1 ? 14 : 0,
+                    ),
+                    child: _PredictionRow(
+                      rank: idx + 1,
+                      prediction: prediction,
+                      accentColor: isTop ? accentColor : Colors.grey,
+                      isTop: isTop,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Details
+            _SectionCard(
+              icon: Icons.description_outlined,
+              iconColor: accentColor,
+              title: viewModel.detailsTitle,
+              child: Text(
+                viewModel.summaryText,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                  height: 1.6,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Disclaimer
+            _DisclaimerCard(warningText: viewModel.warningText),
+            const SizedBox(height: 24),
+
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.camera_alt_rounded,
+                    label: 'Scan Again',
+                    color: colorScheme.primary,
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.home_rounded,
+                    label: 'Home',
+                    color: Colors.grey.shade600,
+                    isOutlined: true,
+                    onTap: () =>
+                        Navigator.popUntil(context, (route) => route.isFirst),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Top Result Card with Circular Gauge
+// ═══════════════════════════════════════════════════════════════════════════
+class _TopResultCard extends StatelessWidget {
+  const _TopResultCard({
+    required this.label,
+    required this.confidence,
+    required this.accentColor,
+    required this.isDisease,
+  });
+  final String label;
+  final double confidence;
+  final Color accentColor;
+  final bool isDisease;
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = (confidence * 100).toStringAsFixed(1);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accentColor.withValues(alpha: 0.1),
+            accentColor.withValues(alpha: 0.04),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Circular Gauge
+          SizedBox(
+            width: 110,
+            height: 110,
+            child: CustomPaint(
+              painter: _ConfidenceGaugePainter(
+                progress: confidence,
+                color: accentColor,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$percent%',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: accentColor,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      'confidence',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: accentColor.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Label
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: accentColor,
+              letterSpacing: -0.3,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+
+          // Type badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isDisease ? Icons.check_circle_rounded : Icons.pets_rounded,
+                  size: 14,
+                  color: accentColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isDisease ? 'Disease Scan' : 'Breed Match',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: accentColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Confidence Gauge Painter
+// ═══════════════════════════════════════════════════════════════════════════
+class _ConfidenceGaugePainter extends CustomPainter {
+  _ConfidenceGaugePainter({required this.progress, required this.color});
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 6;
+    const startAngle = -math.pi / 2;
+    final sweepAngle = 2 * math.pi * progress;
+
+    // Background track
+    final bgPaint = Paint()
+      ..color = color.withValues(alpha: 0.12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(center, radius, bgPaint);
+
+    // Progress arc
+    final fgPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle,
+      false,
+      fgPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConfidenceGaugePainter old) =>
+      old.progress != progress || old.color != color;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Section Card (generic wrapper)
+// ═══════════════════════════════════════════════════════════════════════════
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.child,
+  });
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
+            blurRadius: 14,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: child,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          child,
+        ],
+      ),
     );
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Prediction Row (with rank number)
+// ═══════════════════════════════════════════════════════════════════════════
 class _PredictionRow extends StatelessWidget {
+  final int rank;
   final ScanPrediction prediction;
   final Color accentColor;
   final bool isTop;
 
   const _PredictionRow({
+    required this.rank,
     required this.prediction,
     required this.accentColor,
     required this.isTop,
@@ -534,64 +776,72 @@ class _PredictionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final percent = prediction.confidence * 100;
 
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                if (isTop)
-                  Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accentColor,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'TOP',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                Text(
-                  prediction.label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isTop ? FontWeight.w700 : FontWeight.w500,
-                    color: isTop
-                        ? const Color(0xFF1A1A1A)
-                        : Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              '${percent.toStringAsFixed(1)}%',
+        // Rank badge
+        Container(
+          width: 28,
+          height: 28,
+          margin: const EdgeInsets.only(right: 12, top: 1),
+          decoration: BoxDecoration(
+            color: isTop ? accentColor : Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              '#$rank',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: accentColor,
+                color: isTop ? Colors.white : Colors.grey.shade600,
               ),
             ),
-          ],
+          ),
         ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: prediction.confidence,
-            backgroundColor: Colors.grey.shade200,
-            valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-            minHeight: 6,
+        // Label, bar, percentage
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      prediction.label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isTop ? FontWeight.w700 : FontWeight.w500,
+                        color: isTop
+                            ? const Color(0xFF1A1A1A)
+                            : Colors.grey.shade600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${percent.toStringAsFixed(1)}%',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: accentColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: prediction.confidence,
+                  backgroundColor: Colors.grey.shade100,
+                  valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                  minHeight: 7,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -599,6 +849,72 @@ class _PredictionRow extends StatelessWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Disclaimer Card
+// ═══════════════════════════════════════════════════════════════════════════
+class _DisclaimerCard extends StatelessWidget {
+  const _DisclaimerCard({required this.warningText});
+  final String warningText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.info_outline_rounded,
+              size: 18,
+              color: Colors.amber.shade800,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Disclaimer',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.amber.shade900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  warningText,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.amber.shade800,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Action Button
+// ═══════════════════════════════════════════════════════════════════════════
 class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -616,38 +932,42 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: isOutlined ? Colors.white : color,
-          borderRadius: BorderRadius.circular(16),
-          border: isOutlined ? Border.all(color: color, width: 1.5) : null,
-          boxShadow: isOutlined
-              ? null
-              : [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: isOutlined ? color : Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: isOutlined ? color : Colors.white,
+    return Material(
+      color: isOutlined ? Colors.white : color,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: isOutlined ? Border.all(color: color, width: 1.5) : null,
+            boxShadow: isOutlined
+                ? null
+                : [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: isOutlined ? color : Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isOutlined ? color : Colors.white,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
