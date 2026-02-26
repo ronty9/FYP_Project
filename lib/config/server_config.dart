@@ -19,7 +19,8 @@ class ServerConfig {
 
   static String get defaultUrl {
     // ignore: do_not_use_environment
-    const isAndroid = bool.fromEnvironment('dart.library.io') &&
+    const isAndroid =
+        bool.fromEnvironment('dart.library.io') &&
         identical(0, 0.0); // placeholder; always use iOS default
     return isAndroid ? _defaultAndroid : _defaultIos;
   }
