@@ -2,7 +2,7 @@ import 'dart:io';
 
 import '../models/scan_prediction.dart';
 import '../scan_type.dart';
-import '../services/ai_service.dart';
+import '../services/ai_service.dart'; // Make sure this path is correct
 import 'base_view_model.dart';
 
 // Re-export so existing imports keep working.
@@ -39,7 +39,7 @@ class ScanResultViewModel extends BaseViewModel {
     final top = topPrediction;
     if (top == null) return '';
     return scanType == ScanType.skinDisease
-        ? 'Your pet looks healthy. (${top.label} - $topConfidencePercent%)\n$_summaryText'
+        ? 'Condition analysis: ${top.label} ($topConfidencePercent%)\n$_summaryText'
         : 'Your pet\'s breed is most likely ${top.label} ($topConfidencePercent%).\n$_summaryText';
   }
 
@@ -53,8 +53,8 @@ class ScanResultViewModel extends BaseViewModel {
       if (scanType == ScanType.breed) {
         await _runBreedPrediction();
       } else {
-        // Skin-disease model not yet integrated - use static placeholder.
-        _runStaticDiseasePlaceholder();
+        // --- REAL AI CALL FOR SKIN DISEASE ---
+        await _runDiseasePrediction();
       }
     });
   }
@@ -63,7 +63,7 @@ class ScanResultViewModel extends BaseViewModel {
     final result = await AiService.predictBreed(imageFile);
     _detectedSpecies = result.species;
     _predictions = result.breedPredictions;
-    _detailsTitle = 'Breed result';
+    _detailsTitle = 'Breed Result';
     final top = _predictions.isNotEmpty ? _predictions.first : null;
     _summaryText = top == null
         ? 'Could not determine the breed from this photo.'
@@ -72,15 +72,29 @@ class ScanResultViewModel extends BaseViewModel {
               'mixed-breed pets.';
   }
 
-  void _runStaticDiseasePlaceholder() {
-    _detailsTitle = 'Disease details';
-    _predictions = const [
-      ScanPrediction(label: 'Healthy skin', confidence: 0.98),
-      ScanPrediction(label: 'Mild irritation', confidence: 0.02),
-    ];
-    _summaryText =
-        'From this photo, your pet\'s skin looks mostly healthy. If you notice '
-        'redness, swelling or your pet seems uncomfortable, please consult a '
-        'veterinarian.';
+  Future<void> _runDiseasePrediction() async {
+    final result = await AiService.predictDisease(imageFile);
+    _detectedSpecies = result.species;
+    _predictions = result.diseasePredictions;
+    _detailsTitle = 'Disease Analysis Result';
+
+    final top = _predictions.isNotEmpty ? _predictions.first : null;
+
+    if (top == null) {
+      _summaryText = 'Could not determine the skin condition from this photo.';
+    } else {
+      // Dynamic summary based on the result
+      if (top.label.toLowerCase().contains('health')) {
+        _summaryText =
+            'From this photo, your $_detectedSpecies\'s skin looks mostly healthy. '
+            'If you notice redness, swelling, or your pet seems uncomfortable, '
+            'please consult a veterinarian.';
+      } else {
+        _summaryText =
+            'The AI detected signs of ${top.label} on your $_detectedSpecies. '
+            'Please monitor the affected area and consult a veterinarian for '
+            'a proper medical diagnosis and treatment plan.';
+      }
+    }
   }
 }
