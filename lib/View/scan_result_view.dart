@@ -129,7 +129,10 @@ class _ResultHeader extends StatelessWidget {
             children: [
               _HeaderIconButton(
                 icon: Icons.arrow_back_ios_new_rounded,
-                onTap: () => Navigator.pop(context),
+                // Using read() so it correctly calls the view model without watching
+                onTap: () => context
+                    .read<ScanResultViewModel>()
+                    .onScanAgainPressed(context),
               ),
               const SizedBox(width: 16),
               const Expanded(
@@ -495,20 +498,21 @@ class _ResultContent extends StatelessWidget {
                 Expanded(
                   child: _ActionButton(
                     icon: Icons.camera_alt_rounded,
-                    label: 'Scan Again',
+                    label: viewModel.isSaving ? 'Saving...' : 'Scan Again',
                     color: colorScheme.primary,
-                    onTap: () => Navigator.pop(context),
+                    isLoading: viewModel.isSaving,
+                    onTap: () => viewModel.onScanAgainPressed(context),
                   ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: _ActionButton(
                     icon: Icons.home_rounded,
-                    label: 'Home',
+                    label: viewModel.isSaving ? 'Saving...' : 'Home',
                     color: Colors.grey.shade600,
                     isOutlined: true,
-                    onTap: () =>
-                        Navigator.popUntil(context, (route) => route.isFirst),
+                    isLoading: viewModel.isSaving,
+                    onTap: () => viewModel.onHomePressed(context),
                   ),
                 ),
               ],
@@ -921,6 +925,7 @@ class _ActionButton extends StatelessWidget {
   final Color color;
   final bool isOutlined;
   final VoidCallback onTap;
+  final bool isLoading;
 
   const _ActionButton({
     required this.icon,
@@ -928,6 +933,7 @@ class _ActionButton extends StatelessWidget {
     required this.color,
     this.isOutlined = false,
     required this.onTap,
+    this.isLoading = false,
   });
 
   @override
@@ -936,7 +942,7 @@ class _ActionButton extends StatelessWidget {
       color: isOutlined ? Colors.white : color,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: onTap,
+        onTap: isLoading ? null : onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -956,7 +962,17 @@ class _ActionButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isOutlined ? color : Colors.white, size: 20),
+              if (isLoading)
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: isOutlined ? color : Colors.white,
+                  ),
+                )
+              else
+                Icon(icon, color: isOutlined ? color : Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(
                 label,

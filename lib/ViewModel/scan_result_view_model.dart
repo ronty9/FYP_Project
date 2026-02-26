@@ -1,11 +1,14 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
 import '../models/scan_prediction.dart';
 import '../scan_type.dart';
-import '../services/ai_service.dart'; // Make sure this path is correct
+import '../services/ai_service.dart';
 import 'base_view_model.dart';
 
-// Re-export so existing imports keep working.
 export '../models/scan_prediction.dart';
 
 class ScanResultViewModel extends BaseViewModel {
@@ -21,14 +24,15 @@ class ScanResultViewModel extends BaseViewModel {
   String _summaryText = '';
   String _detectedSpecies = '';
 
+  // --- New Loading State for Saving ---
+  bool _isSaving = false;
+  bool get isSaving => _isSaving;
+
   List<ScanPrediction> get predictions => _predictions;
   String get detailsTitle => _detailsTitle;
   String get summaryText => _summaryText;
-
-  /// 'cat' | 'dog' - populated after the AI call completes.
   String get detectedSpecies => _detectedSpecies;
 
-  /// Returns null while loading or on error.
   ScanPrediction? get topPrediction =>
       _predictions.isNotEmpty ? _predictions.first : null;
 
@@ -53,9 +57,9 @@ class ScanResultViewModel extends BaseViewModel {
       if (scanType == ScanType.breed) {
         await _runBreedPrediction();
       } else {
-        // --- REAL AI CALL FOR SKIN DISEASE ---
         await _runDiseasePrediction();
       }
+      // Note: We removed the automatic save from here!
     });
   }
 
@@ -83,7 +87,6 @@ class ScanResultViewModel extends BaseViewModel {
     if (top == null) {
       _summaryText = 'Could not determine the skin condition from this photo.';
     } else {
-      // Dynamic summary based on the result
       if (top.label.toLowerCase().contains('health')) {
         _summaryText =
             'From this photo, your $_detectedSpecies\'s skin looks mostly healthy. '
@@ -95,6 +98,74 @@ class ScanResultViewModel extends BaseViewModel {
             'Please monitor the affected area and consult a veterinarian for '
             'a proper medical diagnosis and treatment plan.';
       }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Button Actions (Save & Navigate)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<void> onScanAgainPressed(BuildContext context) async {
+    await _saveAndNavigate(context, isHome: false);
+  }
+
+  Future<void> onHomePressed(BuildContext context) async {
+    await _saveAndNavigate(context, isHome: true);
+  }
+
+  Future<void> _saveAndNavigate(
+    BuildContext context, {
+    required bool isHome,
+  }) async {
+    // Prevent double clicking
+    if (_isSaving) return;
+
+    // Only save if the prediction actually succeeded
+    if (topPrediction != null) {
+      _isSaving = true;
+      notifyListeners();
+
+      await _saveToFirebase();
+
+      _isSaving = false;
+      notifyListeners();
+    }
+
+    if (context.mounted) {
+      if (isHome) {
+        Navigator.popUntil(context, (route) => route.isFirst);
+      } else {
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  Future<void> _saveToFirebase() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final top = topPrediction;
+
+    if (user == null || top == null) return;
+
+    try {
+      final isDisease = scanType == ScanType.skinDisease;
+
+      // Aligned with the 'Case' / 'ScanHistory' table in your ERD
+      await FirebaseFirestore.instance.collection('ScanHistory').add({
+        'userId': user.uid,
+        'scanType': isDisease ? 'skinDisease' : 'breed',
+        'topLabel': top.label, // Maps to caseResult
+        'confidence': top.confidence, // Maps to ResultPercentage
+        'date': FieldValue.serverTimestamp(), // Maps to createdAt
+        'diseaseId': isDisease ? top.label : '',
+        'breedId': !isDisease ? top.label : '',
+        'caseDescription': _summaryText,
+        'caseStatus': 'Completed',
+        'imagePath':
+            '', // To be updated if you upload images to Firebase Storage
+      });
+      print("DEBUG: Scan history successfully saved to Firebase!");
+    } catch (e) {
+      print("DEBUG: Failed to save scan history: $e");
     }
   }
 }

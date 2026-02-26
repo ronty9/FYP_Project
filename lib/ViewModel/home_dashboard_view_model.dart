@@ -177,7 +177,6 @@ class HomeDashboardViewModel extends BaseViewModel {
           name: data['petName'] ?? 'Unknown',
           species: displaySubtitle,
           speciesRaw: data['species'] ?? 'Pet',
-          lastScan: 'No scans yet',
           age: ageString,
           gender: data['gender'] as String?,
           colour: data['colour'] as String?,
@@ -387,7 +386,6 @@ class PetHomeInfo {
   final String name;
   final String species;
   final String speciesRaw;
-  final String lastScan;
   final String age;
   final String? gender;
   final String? colour;
@@ -404,7 +402,6 @@ class PetHomeInfo {
     required this.name,
     required this.species,
     this.speciesRaw = '',
-    required this.lastScan,
     this.age = '',
     this.gender,
     this.colour,
