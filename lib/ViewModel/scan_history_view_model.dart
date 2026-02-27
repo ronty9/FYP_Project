@@ -12,7 +12,8 @@ class ScanHistoryItem {
     required this.topLabel,
     required this.confidence,
     required this.dateLabel,
-    required this.timestamp, // Added to sort locally
+    required this.timestamp,
+    this.imageUrl,
   });
 
   final ScanType type;
@@ -20,6 +21,7 @@ class ScanHistoryItem {
   final double confidence;
   final String dateLabel;
   final DateTime timestamp;
+  final String? imageUrl;
 
   bool get isDisease => type == ScanType.skinDisease;
 }
@@ -71,6 +73,7 @@ class ScanHistoryViewModel extends BaseViewModel {
             confidence: (data['confidence'] as num?)?.toDouble() ?? 0.0,
             dateLabel: dateStr,
             timestamp: dateTime,
+            imageUrl: data['imageUrl'] as String?,
           );
         }).toList();
 

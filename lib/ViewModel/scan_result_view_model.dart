@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
 import '../models/scan_prediction.dart';
@@ -153,6 +154,24 @@ class ScanResultViewModel extends BaseViewModel {
     try {
       final isDisease = scanType == ScanType.skinDisease;
 
+      // Upload image to Firebase Storage
+      String imageUrl = '';
+      try {
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final scanTypeStr = isDisease ? 'skinDisease' : 'breed';
+        final storagePath =
+            'scan_images/${user.uid}/${scanTypeStr}_$timestamp.jpg';
+        final ref = FirebaseStorage.instance.ref().child(storagePath);
+        final uploadTask = await ref.putFile(
+          imageFile,
+          SettableMetadata(contentType: 'image/jpeg'),
+        );
+        imageUrl = await uploadTask.ref.getDownloadURL();
+      } catch (e) {
+        debugPrint('Error uploading scan image: $e');
+        // Continue saving even if image upload fails
+      }
+
       await FirebaseFirestore.instance.collection('ScanHistory').add({
         'userId': user.uid,
         'scanType': isDisease ? 'skinDisease' : 'breed',
@@ -163,7 +182,7 @@ class ScanResultViewModel extends BaseViewModel {
         'breedId': !isDisease ? top.label : '',
         'caseDescription': _summaryText,
         'caseStatus': 'Completed',
-        'imagePath': '',
+        'imageUrl': imageUrl,
       });
     } catch (e) {
       _saveError = e.toString();

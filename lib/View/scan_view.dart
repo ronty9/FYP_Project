@@ -587,7 +587,7 @@ class _FilledImagePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 210,
+      height: 168,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -598,12 +598,18 @@ class _FilledImagePreview extends StatelessWidget {
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Stack(
         fit: StackFit.expand,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: Image.file(image, fit: BoxFit.cover),
+            child: Image.file(
+              image,
+              fit: BoxFit.contain,
+              width: double.infinity,
+              height: double.infinity,
+            ),
           ),
           // Top gradient overlay for close button
           Positioned(

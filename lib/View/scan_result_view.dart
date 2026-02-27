@@ -153,18 +153,14 @@ class _ResultHeader extends StatelessWidget {
           // Image preview
           Container(
             width: double.infinity,
-            height: 170,
+            height: 168,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 2.5,
-              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 16,
-                  offset: const Offset(0, 8),
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
@@ -172,50 +168,66 @@ class _ResultHeader extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.file(imageFile, fit: BoxFit.cover),
-                // Bottom gradient
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.file(
+                    imageFile,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                ),
+                // Top gradient overlay
                 Positioned(
+                  top: 0,
                   left: 0,
                   right: 0,
-                  bottom: 0,
-                  height: 48,
+                  height: 56,
                   child: Container(
                     decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
+                          Colors.black.withValues(alpha: 0.4),
                           Colors.transparent,
-                          Colors.black.withValues(alpha: 0.5),
                         ],
                       ),
                     ),
                   ),
                 ),
                 Positioned(
-                  bottom: 10,
+                  bottom: 12,
                   left: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                      horizontal: 12,
+                      vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
+                      color: accentColor,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.15),
-                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accentColor.withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(typeIcon, size: 13, color: Colors.white),
+                        Icon(typeIcon, size: 14, color: Colors.white),
                         const SizedBox(width: 6),
                         Text(
                           typeLabel,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
                           ),

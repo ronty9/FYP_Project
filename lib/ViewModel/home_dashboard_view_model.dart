@@ -24,6 +24,7 @@ class HomeDashboardViewModel extends BaseViewModel {
   bool _isLoading = true;
   String _userName = '';
   String? _profileImageUrl;
+  bool _hasUnreadNotifications = false;
 
   // --- Getters ---
   List<PetHomeInfo> get pets => List.unmodifiable(_pets);
@@ -33,6 +34,7 @@ class HomeDashboardViewModel extends BaseViewModel {
   CalendarEvent? get upcomingEvent => _upcomingEvent;
   String get userName => _userName;
   String? get profileImageUrl => _profileImageUrl;
+  bool get hasUnreadNotifications => _hasUnreadNotifications;
   @override
   bool get isLoading => _isLoading;
 
@@ -53,6 +55,7 @@ class HomeDashboardViewModel extends BaseViewModel {
       _fetchUserPets(),
       _fetchRandomTips(),
       _fetchUpcomingSchedule(),
+      _fetchUnreadNotifications(),
     ]);
 
     _isLoading = false;
@@ -366,6 +369,34 @@ class HomeDashboardViewModel extends BaseViewModel {
     }
   }
 
+  // --- 4. Fetch Unread Notifications ---
+  Future<void> _fetchUnreadNotifications() async {
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser == null) return;
+
+    try {
+      final userSnap = await FirebaseFirestore.instance
+          .collection('user')
+          .where('providerId', isEqualTo: authUser.uid)
+          .limit(1)
+          .get();
+
+      if (userSnap.docs.isEmpty) return;
+      final customUserId = userSnap.docs.first.id;
+
+      final unreadSnap = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('userId', isEqualTo: customUserId)
+          .where('isRead', isEqualTo: false)
+          .limit(1)
+          .get();
+
+      _hasUnreadNotifications = unreadSnap.docs.isNotEmpty;
+    } catch (e) {
+      debugPrint('Error fetching unread notifications: $e');
+    }
+  }
+
   String _formatTime(DateTime? dt) {
     if (dt == null) return '';
     final h = dt.hour;
@@ -380,7 +411,10 @@ class HomeDashboardViewModel extends BaseViewModel {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const NotificationsView()),
-    );
+    ).then((_) async {
+      await _fetchUnreadNotifications();
+      notifyListeners();
+    });
   }
 
   void addPet(BuildContext context) {

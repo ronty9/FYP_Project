@@ -85,6 +85,7 @@ class OtpService {
             },
           ],
           'from': {'email': _senderEmail, 'name': _senderName},
+
           'content': [
             {'type': 'text/html', 'value': _buildEmailHTML(userName, otp)},
           ],

@@ -106,13 +106,15 @@ class _ScanHistoryBody extends StatelessWidget {
                     _StatBadge(
                       icon: Icons.healing_rounded,
                       label: 'Skin Scans',
-                      value: '${viewModel.history.where((h) => h.isDisease).length}',
+                      value:
+                          '${viewModel.history.where((h) => h.isDisease).length}',
                     ),
                     const SizedBox(width: 12),
                     _StatBadge(
                       icon: Icons.pets_rounded,
                       label: 'Breed Scans',
-                      value: '${viewModel.history.where((h) => !h.isDisease).length}',
+                      value:
+                          '${viewModel.history.where((h) => !h.isDisease).length}',
                     ),
                   ],
                 ),
@@ -201,8 +203,8 @@ class _HistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDisease = item.isDisease;
-    final Color accentColor = isDisease 
-        ? const Color(0xFFFF6B6B) 
+    final Color accentColor = isDisease
+        ? const Color(0xFFFF6B6B)
         : const Color(0xFF4ECDC4);
     final IconData icon = isDisease
         ? Icons.healing_rounded
@@ -227,22 +229,32 @@ class _HistoryCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Icon container
+            // Thumbnail or fallback icon
             Container(
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    accentColor,
-                    accentColor.withValues(alpha: 0.7),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: item.imageUrl == null || item.imageUrl!.isEmpty
+                    ? LinearGradient(
+                        colors: [
+                          accentColor,
+                          accentColor.withValues(alpha: 0.7),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
                 borderRadius: BorderRadius.circular(14),
+                image: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(item.imageUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: Icon(icon, color: Colors.white, size: 26),
+              child: item.imageUrl == null || item.imageUrl!.isEmpty
+                  ? Icon(icon, color: Colors.white, size: 26)
+                  : null,
             ),
             const SizedBox(width: 14),
             // Content
@@ -307,7 +319,9 @@ class _HistoryCard extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: item.confidence,
                             backgroundColor: Colors.grey.shade200,
-                            valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              accentColor,
+                            ),
                             minHeight: 6,
                           ),
                         ),
@@ -345,7 +359,7 @@ class _EmptyHistoryView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -395,7 +409,10 @@ class _EmptyHistoryView extends StatelessWidget {
             GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -415,7 +432,11 @@ class _EmptyHistoryView extends StatelessWidget {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+                    Icon(
+                      Icons.camera_alt_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                     SizedBox(width: 10),
                     Text(
                       'Start Scanning',
