@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../calendar_event.dart';
+import '../models/reminder_duration.dart';
+import '../models/schedule_type.dart';
 import '../View/add_pet_view.dart';
 import '../View/notifications_view.dart';
 import 'base_view_model.dart';
@@ -314,17 +316,44 @@ class HomeDashboardViewModel extends BaseViewModel {
           final nData = nearestDoc.data();
           final startTs = nData['startDateTime'] as Timestamp?;
           final endTs = nData['endDateTime'] as Timestamp?;
+          final reminderTs = nData['reminderDateTime'] as Timestamp?;
+          final petId = nData['petId'] as String?;
+
+          // Fetch pet name from pets collection (schedule doc does not store petName)
+          String petName = '';
+          if (petId != null && petId.isNotEmpty) {
+            try {
+              final petDoc = await FirebaseFirestore.instance
+                  .collection('pets')
+                  .doc(petId)
+                  .get();
+              if (petDoc.exists) {
+                petName = petDoc.data()?['petName'] as String? ?? '';
+              }
+            } catch (e) {
+              debugPrint('Error fetching pet name for upcoming schedule: $e');
+            }
+          }
+
           _upcomingEvent = CalendarEvent(
             day: nearestDate.day,
-            petName: nData['petName'] as String? ?? '',
+            petName: petName,
             activity: nData['scheTitle'] as String? ?? 'Untitled',
-            location: nData['scheLocation'] as String? ?? '',
+            location: nData['scheDescription'] as String? ?? '',
             time: _formatTime(startTs?.toDate()),
             scheduleId: nearestId,
             startDateTime: startTs?.toDate(),
             endDateTime: endTs?.toDate(),
             isCompleted: nData['isCompleted'] as bool? ?? false,
-            petId: nData['petId'] as String?,
+            petId: petId,
+            scheduleType: ScheduleType.fromFirestore(
+              nData['scheduleType'] as String?,
+            ),
+            reminderEnabled: nData['reminderEnabled'] as bool? ?? false,
+            reminderDateTime: reminderTs?.toDate(),
+            reminderDuration: ReminderDurationExtension.fromString(
+              nData['reminderDuration'] as String?,
+            ),
           );
         }
       } else {

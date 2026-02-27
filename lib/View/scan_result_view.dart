@@ -490,7 +490,78 @@ class _ResultContent extends StatelessWidget {
 
             // Disclaimer
             _DisclaimerCard(warningText: viewModel.warningText),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            // Save status indicator
+            if (viewModel.isSaving)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: accentColor,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Saving to history...',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (viewModel.hasSaved)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 16,
+                      color: Colors.green.shade500,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Saved to history',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.green.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (viewModel.saveError != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 16,
+                      color: Colors.orange.shade600,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Could not save to history',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.orange.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             // Action Buttons
             Row(
@@ -498,9 +569,8 @@ class _ResultContent extends StatelessWidget {
                 Expanded(
                   child: _ActionButton(
                     icon: Icons.camera_alt_rounded,
-                    label: viewModel.isSaving ? 'Saving...' : 'Scan Again',
+                    label: 'Scan Again',
                     color: colorScheme.primary,
-                    isLoading: viewModel.isSaving,
                     onTap: () => viewModel.onScanAgainPressed(context),
                   ),
                 ),
@@ -508,10 +578,9 @@ class _ResultContent extends StatelessWidget {
                 Expanded(
                   child: _ActionButton(
                     icon: Icons.home_rounded,
-                    label: viewModel.isSaving ? 'Saving...' : 'Home',
+                    label: 'Home',
                     color: Colors.grey.shade600,
                     isOutlined: true,
-                    isLoading: viewModel.isSaving,
                     onTap: () => viewModel.onHomePressed(context),
                   ),
                 ),
@@ -925,7 +994,6 @@ class _ActionButton extends StatelessWidget {
   final Color color;
   final bool isOutlined;
   final VoidCallback onTap;
-  final bool isLoading;
 
   const _ActionButton({
     required this.icon,
@@ -933,7 +1001,6 @@ class _ActionButton extends StatelessWidget {
     required this.color,
     this.isOutlined = false,
     required this.onTap,
-    this.isLoading = false,
   });
 
   @override
@@ -942,7 +1009,7 @@ class _ActionButton extends StatelessWidget {
       color: isOutlined ? Colors.white : color,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: isLoading ? null : onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -962,17 +1029,7 @@ class _ActionButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (isLoading)
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: isOutlined ? color : Colors.white,
-                  ),
-                )
-              else
-                Icon(icon, color: isOutlined ? color : Colors.white, size: 20),
+              Icon(icon, color: isOutlined ? color : Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(
                 label,

@@ -28,6 +28,9 @@ class ScanResultViewModel extends BaseViewModel {
   bool _isSaving = false;
   bool get isSaving => _isSaving;
 
+  bool _hasSaved = false;
+  bool get hasSaved => _hasSaved;
+
   String? _saveError;
   String? get saveError => _saveError;
 
@@ -55,15 +58,34 @@ class ScanResultViewModel extends BaseViewModel {
       'It is not a medical diagnosis. Please consult a veterinarian for '
       'professional advice if you have any concerns about your pet\'s health.';
 
-  void _runPrediction() {
-    runAsync(() async {
+  void _runPrediction() async {
+    // Run prediction (sets isLoading via base class helpers)
+    setLoading(true);
+    setError(null);
+    try {
       if (scanType == ScanType.breed) {
         await _runBreedPrediction();
       } else {
         await _runDiseasePrediction();
       }
-      // Note: We removed the automatic save from here!
-    });
+    } catch (e) {
+      setError(e.toString());
+    } finally {
+      setLoading(false);
+    }
+
+    // Auto-save immediately after a successful prediction
+    if (topPrediction != null && errorMessage == null && !_hasSaved) {
+      _isSaving = true;
+      _saveError = null;
+      notifyListeners();
+
+      await _saveToFirebase();
+
+      _isSaving = false;
+      if (_saveError == null) _hasSaved = true;
+      notifyListeners();
+    }
   }
 
   Future<void> _runBreedPrediction() async {
@@ -108,62 +130,13 @@ class ScanResultViewModel extends BaseViewModel {
   // Button Actions (Save & Navigate)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Future<void> onScanAgainPressed(BuildContext context) async {
-    await _saveAndNavigate(context, isHome: false);
+  void onScanAgainPressed(BuildContext context) {
+    if (context.mounted) Navigator.pop(context);
   }
 
-  Future<void> onHomePressed(BuildContext context) async {
-    await _saveAndNavigate(context, isHome: true);
-  }
-
-  Future<void> _saveAndNavigate(
-    BuildContext context, {
-    required bool isHome,
-  }) async {
-    // Prevent double clicking
-    if (_isSaving) return;
-
-    // Only save if the prediction actually succeeded
-    if (topPrediction != null) {
-      _isSaving = true;
-      _saveError = null;
-      notifyListeners();
-
-      await _saveToFirebase();
-
-      _isSaving = false;
-      notifyListeners();
-
-      // Show error snackbar and abort navigation if save failed
-      if (_saveError != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $_saveError'),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-            action: SnackBarAction(
-              label: 'Continue anyway',
-              textColor: Colors.white,
-              onPressed: () {
-                if (isHome) {
-                  Navigator.popUntil(context, (route) => route.isFirst);
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-            ),
-          ),
-        );
-        return;
-      }
-    }
-
+  void onHomePressed(BuildContext context) {
     if (context.mounted) {
-      if (isHome) {
-        Navigator.popUntil(context, (route) => route.isFirst);
-      } else {
-        Navigator.pop(context);
-      }
+      Navigator.popUntil(context, (route) => route.isFirst);
     }
   }
 
