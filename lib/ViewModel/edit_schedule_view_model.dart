@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../calendar_event.dart';
 import '../models/pet_info.dart';
 import '../models/reminder_duration.dart';
+import '../models/schedule_type.dart';
 import '../services/notification_service.dart';
 import 'base_view_model.dart';
 
@@ -19,6 +20,7 @@ class EditScheduleViewModel extends BaseViewModel {
     _reminderDateTime = originalEvent.reminderDateTime;
     _reminderDuration =
         originalEvent.reminderDuration ?? ReminderDuration.fifteenMinutes;
+    _scheduleType = originalEvent.scheduleType;
   }
 
   final CalendarEvent originalEvent;
@@ -33,6 +35,7 @@ class EditScheduleViewModel extends BaseViewModel {
   bool _reminderEnabled = false;
   DateTime? _reminderDateTime;
   late ReminderDuration _reminderDuration;
+  late ScheduleType _scheduleType;
 
   PetInfo? get selectedPet => _selectedPet;
 
@@ -49,6 +52,12 @@ class EditScheduleViewModel extends BaseViewModel {
   bool get reminderEnabled => _reminderEnabled;
   ReminderDuration get reminderDuration => _reminderDuration;
   DateTime? get reminderDateTime => _reminderDateTime;
+  ScheduleType get scheduleType => _scheduleType;
+
+  void setScheduleType(ScheduleType type) {
+    _scheduleType = type;
+    notifyListeners();
+  }
 
   void setReminderEnabled(bool value) {
     if (_reminderEnabled == value) return;
@@ -165,6 +174,7 @@ class EditScheduleViewModel extends BaseViewModel {
       reminderDateTime: _reminderDateTime,
       reminderDuration: _reminderDuration,
       petId: _selectedPet?.id,
+      scheduleType: _scheduleType,
     );
   }
 
@@ -260,6 +270,7 @@ class EditScheduleViewModel extends BaseViewModel {
           reminderDateTime: _reminderDateTime,
           reminderDuration: _reminderDuration,
           petId: _selectedPet?.id,
+          scheduleType: _scheduleType,
         );
 
         await FirebaseFirestore.instance
@@ -307,6 +318,7 @@ class EditScheduleViewModel extends BaseViewModel {
     required DateTime? reminderDateTime,
     required ReminderDuration reminderDuration,
     required String? petId,
+    required ScheduleType scheduleType,
   }) {
     return {
       'scheTitle': scheTitle,
@@ -321,6 +333,7 @@ class EditScheduleViewModel extends BaseViewModel {
           ? reminderDuration.toFirestore()
           : null,
       'petId': petId,
+      'scheduleType': scheduleType.toFirestore(),
     };
   }
 

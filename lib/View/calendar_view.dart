@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../calendar_event.dart';
+import '../models/schedule_type.dart';
 import '../ViewModel/calendar_view_model.dart';
 
 class CalendarView extends StatelessWidget {
@@ -417,7 +418,7 @@ class _EventCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isCompleted
                       ? Colors.grey.shade400
-                      : colorScheme.primary,
+                      : event.scheduleType.color,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(18),
                     bottomLeft: Radius.circular(18),
@@ -432,16 +433,16 @@ class _EventCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isCompleted
                       ? Colors.grey.shade100
-                      : colorScheme.primary.withValues(alpha: 0.1),
+                      : event.scheduleType.color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   isCompleted
                       ? Icons.check_circle_rounded
-                      : Icons.event_rounded,
+                      : event.scheduleType.icon,
                   color: isCompleted
                       ? Colors.grey.shade500
-                      : colorScheme.primary,
+                      : event.scheduleType.color,
                   size: 24,
                 ),
               ),
@@ -505,26 +506,55 @@ class _EventCard extends StatelessWidget {
                           ],
                         ],
                       ),
-                      // Pet badge
-                      if (event.petName.isNotEmpty) ...[
+                      // Pet badge + Type badge
+                      if (event.petName.isNotEmpty ||
+                          event.scheduleType != ScheduleType.other) ...[
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(
-                              Icons.pets,
-                              size: 12,
-                              color: colorScheme.primary.withValues(alpha: 0.7),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              event.petName,
-                              style: textTheme.labelSmall?.copyWith(
+                            if (event.petName.isNotEmpty) ...[
+                              Icon(
+                                Icons.pets,
+                                size: 12,
                                 color: colorScheme.primary.withValues(
-                                  alpha: 0.85,
+                                  alpha: 0.7,
                                 ),
-                                fontWeight: FontWeight.w600,
                               ),
-                            ),
+                              const SizedBox(width: 4),
+                              Text(
+                                event.petName,
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                            if (event.petName.isNotEmpty &&
+                                event.scheduleType != ScheduleType.other)
+                              const SizedBox(width: 8),
+                            if (event.scheduleType != ScheduleType.other)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: event.scheduleType.color.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  event.scheduleType.displayName,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: event.scheduleType.color,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ],

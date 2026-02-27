@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/reminder_duration.dart';
+import '../models/schedule_type.dart';
 import '../ViewModel/add_schedule_view_model.dart';
 import '../ViewModel/pet_profile_view_model.dart';
 import 'add_pet_view.dart';
@@ -234,6 +235,90 @@ class _AddScheduleForm extends StatelessWidget {
                                 colorScheme: colorScheme,
                               ),
                             ],
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // --- Schedule Type Card ---
+                      _FormCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                _IconBox(
+                                  icon: Icons.category_rounded,
+                                  color: Color(0xFF667EEA),
+                                ),
+                                SizedBox(width: 14),
+                                Text(
+                                  'Schedule Type',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF1A1A1A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: ScheduleType.values.map((type) {
+                                final isSelected =
+                                    viewModel.scheduleType == type;
+                                return GestureDetector(
+                                  onTap: () => viewModel.setScheduleType(type),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? type.color.withValues(alpha: 0.15)
+                                          : Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? type.color
+                                            : Colors.grey.shade300,
+                                        width: isSelected ? 2 : 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          type.icon,
+                                          size: 18,
+                                          color: isSelected
+                                              ? type.color
+                                              : Colors.grey.shade500,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          type.displayName,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w700
+                                                : FontWeight.w500,
+                                            color: isSelected
+                                                ? type.color
+                                                : Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
                           ],
                         ),
                       ),

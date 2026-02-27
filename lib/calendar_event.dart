@@ -1,5 +1,6 @@
 // lib/calendar_event.dart
 import 'models/reminder_duration.dart';
+import 'models/schedule_type.dart';
 
 class CalendarEvent {
   const CalendarEvent({
@@ -16,6 +17,7 @@ class CalendarEvent {
     this.reminderDuration,
     this.petId,
     this.isCompleted = false,
+    this.scheduleType = ScheduleType.other,
   });
 
   final int day;
@@ -31,4 +33,5 @@ class CalendarEvent {
   final ReminderDuration? reminderDuration;
   final String? petId;
   final bool isCompleted;
+  final ScheduleType scheduleType;
 }

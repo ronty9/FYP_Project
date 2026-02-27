@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'base_view_model.dart';
 import 'notifications_view_model.dart';
 
@@ -11,11 +12,25 @@ class NotificationDetailViewModel extends BaseViewModel {
     Navigator.pop(context);
   }
 
-  void deleteNotification(BuildContext context) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Notification deleted')));
-    Navigator.pop(context);
+  void deleteNotification(BuildContext context) async {
+    // Delete from Firestore if it has an id
+    if (notification.id != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('notifications')
+            .doc(notification.id)
+            .delete();
+      } catch (e) {
+        debugPrint('Error deleting notification: $e');
+      }
+    }
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Notification deleted')));
+      Navigator.pop(context, true); // Return true to indicate deletion
+    }
   }
 
   // --- UPDATED NAVIGATION ---

@@ -7,6 +7,7 @@ import '../View/add_schedule_view.dart';
 import '../View/schedule_detail_view.dart';
 import '../calendar_event.dart';
 import '../models/reminder_duration.dart';
+import '../models/schedule_type.dart';
 import 'base_view_model.dart';
 
 class CalendarViewModel extends BaseViewModel {
@@ -141,6 +142,9 @@ class CalendarViewModel extends BaseViewModel {
           reminderDateTime: reminderDateTime,
           petId: petId,
           isCompleted: data['isCompleted'] as bool? ?? false,
+          scheduleType: ScheduleType.fromFirestore(
+            data['scheduleType'] as String?,
+          ),
         );
 
         _events.add(event);

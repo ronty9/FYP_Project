@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 
 import '../calendar_event.dart';
 import '../models/reminder_duration.dart';
+import '../models/schedule_type.dart';
 import '../services/notification_service.dart';
 import 'base_view_model.dart';
+import 'notifications_view_model.dart';
 
 class AddScheduleViewModel extends BaseViewModel {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -22,6 +24,8 @@ class AddScheduleViewModel extends BaseViewModel {
   bool _reminderEnabled = false;
   ReminderDuration _reminderDuration = ReminderDuration.fifteenMinutes;
 
+  ScheduleType _scheduleType = ScheduleType.other;
+
   // Placeholder for Pet object (Change 'dynamic' to 'Pet' if you have the model imported)
   dynamic _selectedPet;
   String? userId; // To store resolved User ID
@@ -33,6 +37,12 @@ class AddScheduleViewModel extends BaseViewModel {
   bool get reminderEnabled => _reminderEnabled;
   ReminderDuration get reminderDuration => _reminderDuration;
   dynamic get selectedPet => _selectedPet;
+  ScheduleType get scheduleType => _scheduleType;
+
+  void setScheduleType(ScheduleType type) {
+    _scheduleType = type;
+    notifyListeners();
+  }
 
   // --- Setters ---
   void setStartDate(DateTime? date) {
@@ -232,6 +242,7 @@ class AddScheduleViewModel extends BaseViewModel {
       reminderDuration: _reminderDuration,
       petId: _selectedPet?.id,
       userId: resolvedUserId,
+      scheduleType: _scheduleType,
     );
 
     if (!context.mounted) return;
@@ -250,6 +261,7 @@ class AddScheduleViewModel extends BaseViewModel {
       reminderEnabled: _reminderEnabled,
       reminderDateTime: _reminderDateTime,
       petId: _selectedPet?.id,
+      scheduleType: _scheduleType,
     );
 
     // Schedule notification if reminder is enabled
@@ -261,6 +273,17 @@ class AddScheduleViewModel extends BaseViewModel {
         reminderDateTime: _reminderDateTime!,
       );
     }
+
+    // Create notification record in Firestore
+    final notifType = _mapScheduleTypeToNotificationType(_scheduleType);
+    await NotificationsViewModel.createNotificationRecord(
+      userId: resolvedUserId,
+      title: '${_scheduleType.displayName}: ${titleController.text.trim()}',
+      message:
+          '${_selectedPet?.name ?? "Your pet"} has "${titleController.text.trim()}" scheduled for ${DateFormat('d MMM yyyy, h:mm a').format(start)}.',
+      type: notifType,
+      linkedDate: start,
+    );
 
     if (context.mounted) {
       Navigator.pop(context, newEvent);
@@ -287,6 +310,29 @@ class AddScheduleViewModel extends BaseViewModel {
     return snapshot.docs.first.id;
   }
 
+  NotificationType _mapScheduleTypeToNotificationType(ScheduleType type) {
+    switch (type) {
+      case ScheduleType.vaccination:
+        return NotificationType.vaccination;
+      case ScheduleType.checkUp:
+        return NotificationType.checkUp;
+      case ScheduleType.medication:
+        return NotificationType.medication;
+      case ScheduleType.grooming:
+        return NotificationType.grooming;
+      case ScheduleType.exercise:
+        return NotificationType.exercise;
+      case ScheduleType.vet:
+        return NotificationType.vet;
+      case ScheduleType.feeding:
+        return NotificationType.feeding;
+      case ScheduleType.note:
+        return NotificationType.note;
+      case ScheduleType.other:
+        return NotificationType.general;
+    }
+  }
+
   Future<String> _createSchedule({
     required String scheTitle,
     required String scheDescription,
@@ -297,6 +343,7 @@ class AddScheduleViewModel extends BaseViewModel {
     required ReminderDuration reminderDuration,
     required String? petId,
     required String userId,
+    required ScheduleType scheduleType,
   }) async {
     final docRef = FirebaseFirestore.instance.collection('schedules').doc();
     await docRef.set({
@@ -316,6 +363,7 @@ class AddScheduleViewModel extends BaseViewModel {
       'petId': petId,
       'userId': userId,
       'isCompleted': false,
+      'scheduleType': scheduleType.toFirestore(),
     });
     return docRef.id;
   }

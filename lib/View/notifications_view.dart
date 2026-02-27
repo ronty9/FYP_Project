@@ -139,41 +139,47 @@ class _NotificationsBody extends StatelessWidget {
 
           // --- Notification List ---
           Expanded(
-            child: todayNotifications.isEmpty && earlierNotifications.isEmpty
+            child: viewModel.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : todayNotifications.isEmpty && earlierNotifications.isEmpty
                 ? const _EmptyState()
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (todayNotifications.isNotEmpty) ...[
-                          const _SectionLabel(label: 'Today'),
-                          const SizedBox(height: 10),
-                          ...todayNotifications.map(
-                            (item) => _NotificationTileCard(
-                              item: item,
-                              onTap: () => viewModel.openNotificationDetail(
-                                context,
-                                item,
+                : RefreshIndicator(
+                    onRefresh: () => viewModel.refreshNotifications(),
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (todayNotifications.isNotEmpty) ...[
+                            const _SectionLabel(label: 'Upcoming'),
+                            const SizedBox(height: 10),
+                            ...todayNotifications.map(
+                              (item) => _NotificationTileCard(
+                                item: item,
+                                onTap: () => viewModel.openNotificationDetail(
+                                  context,
+                                  item,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                        if (earlierNotifications.isNotEmpty) ...[
-                          const _SectionLabel(label: 'Earlier'),
-                          const SizedBox(height: 10),
-                          ...earlierNotifications.map(
-                            (item) => _NotificationTileCard(
-                              item: item,
-                              onTap: () => viewModel.openNotificationDetail(
-                                context,
-                                item,
+                            const SizedBox(height: 16),
+                          ],
+                          if (earlierNotifications.isNotEmpty) ...[
+                            const _SectionLabel(label: 'Earlier'),
+                            const SizedBox(height: 10),
+                            ...earlierNotifications.map(
+                              (item) => _NotificationTileCard(
+                                item: item,
+                                onTap: () => viewModel.openNotificationDetail(
+                                  context,
+                                  item,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
           ),
@@ -243,6 +249,14 @@ class _NotificationTileCard extends StatelessWidget {
         return (Icons.pets_rounded, const Color(0xFF4ECDC4));
       case NotificationType.general:
         return (Icons.notifications_rounded, const Color(0xFF667EEA));
+      case NotificationType.checkUp:
+        return (Icons.local_hospital_rounded, const Color(0xFFFF6B6B));
+      case NotificationType.exercise:
+        return (Icons.directions_walk_rounded, const Color(0xFF45B7D1));
+      case NotificationType.feeding:
+        return (Icons.restaurant_rounded, const Color(0xFF26DE81));
+      case NotificationType.note:
+        return (Icons.note_alt_rounded, const Color(0xFF667EEA));
     }
   }
 

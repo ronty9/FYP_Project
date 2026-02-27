@@ -22,59 +22,13 @@ class ScheduleDetailView extends StatelessWidget {
 class _ScheduleDetailBody extends StatelessWidget {
   const _ScheduleDetailBody();
 
-  Color _getActivityColor(String activity) {
-    final lower = activity.toLowerCase();
-    if (lower.contains('vet') ||
-        lower.contains('checkup') ||
-        lower.contains('doctor')) {
-      return const Color(0xFFFF6B6B);
-    } else if (lower.contains('groom') ||
-        lower.contains('bath') ||
-        lower.contains('spa')) {
-      return const Color(0xFF4ECDC4);
-    } else if (lower.contains('walk') ||
-        lower.contains('exercise') ||
-        lower.contains('play')) {
-      return const Color(0xFF45B7D1);
-    } else if (lower.contains('vaccine') ||
-        lower.contains('shot') ||
-        lower.contains('medicine')) {
-      return const Color(0xFFFFBE0B);
-    } else {
-      return const Color(0xFF667EEA);
-    }
-  }
-
-  IconData _getActivityIcon(String activity) {
-    final lower = activity.toLowerCase();
-    if (lower.contains('vet') ||
-        lower.contains('checkup') ||
-        lower.contains('doctor')) {
-      return Icons.local_hospital_rounded;
-    } else if (lower.contains('groom') ||
-        lower.contains('bath') ||
-        lower.contains('spa')) {
-      return Icons.content_cut_rounded;
-    } else if (lower.contains('walk') ||
-        lower.contains('exercise') ||
-        lower.contains('play')) {
-      return Icons.directions_walk_rounded;
-    } else if (lower.contains('vaccine') ||
-        lower.contains('shot') ||
-        lower.contains('medicine')) {
-      return Icons.vaccines_rounded;
-    } else {
-      return Icons.event_rounded;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final viewModel = context.watch<ScheduleDetailViewModel>();
     final event = viewModel.event;
-    final activityColor = _getActivityColor(event.activity);
-    final activityIcon = _getActivityIcon(event.activity);
+    final activityColor = event.scheduleType.color;
+    final activityIcon = event.scheduleType.icon;
     final isCompleted = event.isCompleted;
 
     return Scaffold(
@@ -288,6 +242,56 @@ class _ScheduleDetailBody extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 14),
+
+                  // Schedule Type Card
+                  _InfoCard(
+                    child: Row(
+                      children: [
+                        _IconBox(
+                          icon: event.scheduleType.icon,
+                          color: event.scheduleType.color,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Type',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: event.scheduleType.color.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  event.scheduleType.displayName,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: event.scheduleType.color,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 14),
                   // Location Card
                   _InfoCard(
