@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:flutter/material.dart';
@@ -21,8 +22,17 @@ class NotificationService {
 
     _navigatorKey = navigatorKey;
 
-    // Initialize timezone database
+    // Initialize timezone database and set local timezone
     tz.initializeTimeZones();
+    try {
+      final String localTimezone = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(localTimezone));
+      debugPrint('🕐 Timezone set to: $localTimezone');
+    } catch (e) {
+      debugPrint(
+        '⚠️ Could not determine local timezone, falling back to UTC: $e',
+      );
+    }
 
     // Android settings
     const androidSettings = AndroidInitializationSettings(
@@ -47,19 +57,36 @@ class NotificationService {
     );
 
     _initialized = true;
+
+    // Request permissions right after init
+    await requestPermissions();
   }
 
-  /// Request notification permissions (primarily for iOS)
+  /// Request notification permissions for both iOS and Android 13+
   Future<bool> requestPermissions() async {
-    if (!_initialized) await initialize(null);
+    if (!_initialized) return false;
 
-    final result = await _notifications
+    // Android 13+ requires runtime POST_NOTIFICATIONS permission
+    final androidResult = await _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.requestNotificationsPermission();
+
+    // iOS requires explicit permission grant
+    final iosResult = await _notifications
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
 
-    return result ?? true; // Android doesn't need runtime permission request
+    final granted = (androidResult ?? true) && (iosResult ?? true);
+    debugPrint(
+      granted
+          ? '✅ Notification permissions granted'
+          : '⚠️ Notification permissions denied',
+    );
+    return granted;
   }
 
   /// Schedule a notification for a schedule reminder

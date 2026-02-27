@@ -18,7 +18,7 @@ class EditScheduleViewModel extends BaseViewModel {
     _reminderEnabled = originalEvent.reminderEnabled;
     _reminderDateTime = originalEvent.reminderDateTime;
     _reminderDuration =
-        originalEvent.reminderDuration ?? ReminderDuration.thirtyMinutes;
+        originalEvent.reminderDuration ?? ReminderDuration.fifteenMinutes;
   }
 
   final CalendarEvent originalEvent;
@@ -48,12 +48,13 @@ class EditScheduleViewModel extends BaseViewModel {
   String get reminderLabel => _reminderDuration.displayName;
   bool get reminderEnabled => _reminderEnabled;
   ReminderDuration get reminderDuration => _reminderDuration;
+  DateTime? get reminderDateTime => _reminderDateTime;
 
   void setReminderEnabled(bool value) {
     if (_reminderEnabled == value) return;
     _reminderEnabled = value;
-    // Auto-calculate reminder time when enabled
-    if (value) {
+    // Auto-calculate reminder time when enabled (skip for customTime)
+    if (value && !_reminderDuration.isCustom) {
       _reminderDateTime = _reminderDuration.calculateReminderTime(
         _startDateTime,
       );
@@ -63,9 +64,11 @@ class EditScheduleViewModel extends BaseViewModel {
 
   void setReminderDuration(ReminderDuration duration) {
     _reminderDuration = duration;
-    // Recalculate reminder time if reminder is enabled
-    if (_reminderEnabled) {
+    // Recalculate for presets; customTime requires manual selection
+    if (!duration.isCustom && _reminderEnabled) {
       _reminderDateTime = duration.calculateReminderTime(_startDateTime);
+    } else if (duration.isCustom) {
+      _reminderDateTime = null;
     }
     notifyListeners();
   }
@@ -128,9 +131,11 @@ class EditScheduleViewModel extends BaseViewModel {
     final picked = await _pickDateTime(context, _endDateTime);
     if (picked == null) return;
 
-    _endDateTime = picked; // Auto-update reminder time when start time changes
-    if (_reminderEnabled) {
-      _reminderDateTime = _reminderDuration.calculateReminderTime(picked);
+    _endDateTime = picked; // Auto-update reminder time when end time changes
+    if (_reminderEnabled && !_reminderDuration.isCustom) {
+      _reminderDateTime = _reminderDuration.calculateReminderTime(
+        _startDateTime,
+      );
     }
     notifyListeners();
   }
@@ -158,6 +163,7 @@ class EditScheduleViewModel extends BaseViewModel {
       endDateTime: _endDateTime,
       reminderEnabled: _reminderEnabled,
       reminderDateTime: _reminderDateTime,
+      reminderDuration: _reminderDuration,
       petId: _selectedPet?.id,
     );
   }

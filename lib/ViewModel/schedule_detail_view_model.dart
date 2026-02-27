@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 import '../calendar_event.dart';
+import '../models/reminder_duration.dart';
 import '../services/notification_service.dart';
 import 'base_view_model.dart';
 
@@ -222,6 +224,28 @@ class ScheduleDetailViewModel extends BaseViewModel {
     }
   }
 
+  String get formattedDateTime {
+    final dt = event.startDateTime;
+    if (dt != null) {
+      final ordinal = _ordinalDay(dt.day);
+      final monthYear = DateFormat('MMM yyyy').format(dt);
+      final timeStr = DateFormat('h:mm a').format(dt);
+      return '$ordinal $monthYear · $timeStr';
+    }
+    // Fallback for legacy events without startDateTime
+    return '${_ordinalDay(event.day)} · ${event.time}';
+  }
+
+  String get reminderLabel {
+    if (!event.reminderEnabled) return 'No reminder set';
+    if (event.reminderDuration == ReminderDuration.customTime &&
+        event.reminderDateTime != null) {
+      return 'At ${DateFormat('d MMM yyyy · h:mm a').format(event.reminderDateTime!)}';
+    }
+    return event.reminderDuration?.displayName ?? 'Reminder set';
+  }
+
+  // kept for backwards compatibility
   String get formattedDay => _ordinalDay(event.day);
 
   String _ordinalDay(int day) {

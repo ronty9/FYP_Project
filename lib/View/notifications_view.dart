@@ -21,86 +21,377 @@ class _NotificationsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final viewModel = context.watch<NotificationsViewModel>();
 
     final todayNotifications = viewModel.todayNotifications;
     final earlierNotifications = viewModel.earlierNotifications;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD), // App Theme Background
-      appBar: AppBar(
-        title: const Text(
-          'Notifications',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: const Color(0xFF2D3142),
-        actions: [
-          // --- CHANGED TO ICON BUTTON ---
-          if (viewModel.hasUnread)
-            IconButton(
-              icon: Icon(
-                Icons.done_all_rounded, // Icon representing "Mark All As Read"
-                color: colorScheme.primary,
-                size: 24,
-              ),
-              onPressed: viewModel.markAllAsRead,
-              tooltip: 'Mark All As Read',
+      backgroundColor: const Color(0xFFF5F7FA),
+      body: Column(
+        children: [
+          // --- Gradient Header ---
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 12,
+              left: 20,
+              right: 20,
+              bottom: 24,
             ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (todayNotifications.isEmpty && earlierNotifications.isEmpty)
-                _EmptyState(textTheme: textTheme, colorScheme: colorScheme)
-              else ...[
-                // --- Today's Notifications ---
-                if (todayNotifications.isNotEmpty) ...[
-                  Text(
-                    'Today',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...todayNotifications.map(
-                    (item) => _NotificationTileCard(
-                      item: item,
-                      onTap: () =>
-                          viewModel.openNotificationDetail(context, item),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.primary,
+                  colorScheme.primary.withValues(alpha: 0.75),
                 ],
-
-                // --- Earlier Notifications ---
-                if (earlierNotifications.isNotEmpty) ...[
-                  Text(
-                    'Earlier',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(32),
+                bottomRight: Radius.circular(32),
+              ),
+            ),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  ...earlierNotifications.map(
-                    (item) => _NotificationTileCard(
-                      item: item,
-                      onTap: () =>
-                          viewModel.openNotificationDetail(context, item),
+                ),
+                const SizedBox(width: 16),
+                const Text(
+                  'Notifications',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                if (viewModel.hasUnread) ...[
+                  Container(
+                    margin: const EdgeInsets.only(right: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade400,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${viewModel.unreadCount}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: viewModel.markAllAsRead,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.done_all_rounded,
+                            color: Colors.white,
+                            size: 15,
+                          ),
+                          SizedBox(width: 5),
+                          Text(
+                            'Read all',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ],
+            ),
+          ),
+
+          // --- Notification List ---
+          Expanded(
+            child: todayNotifications.isEmpty && earlierNotifications.isEmpty
+                ? const _EmptyState()
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (todayNotifications.isNotEmpty) ...[
+                          const _SectionLabel(label: 'Today'),
+                          const SizedBox(height: 10),
+                          ...todayNotifications.map(
+                            (item) => _NotificationTileCard(
+                              item: item,
+                              onTap: () => viewModel.openNotificationDetail(
+                                context,
+                                item,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        if (earlierNotifications.isNotEmpty) ...[
+                          const _SectionLabel(label: 'Earlier'),
+                          const SizedBox(height: 10),
+                          ...earlierNotifications.map(
+                            (item) => _NotificationTileCard(
+                              item: item,
+                              onTap: () => viewModel.openNotificationDetail(
+                                context,
+                                item,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// --- Section Label ---
+class _SectionLabel extends StatelessWidget {
+  final String label;
+
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 16,
+          decoration: BoxDecoration(
+            color: colorScheme.primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// --- Notification Tile Card ---
+class _NotificationTileCard extends StatelessWidget {
+  final NotificationItem item;
+  final VoidCallback onTap;
+
+  const _NotificationTileCard({required this.item, required this.onTap});
+
+  static (IconData, Color) _iconForType(NotificationType type) {
+    switch (type) {
+      case NotificationType.vaccination:
+        return (Icons.vaccines_rounded, const Color(0xFFFF6B6B));
+      case NotificationType.medication:
+        return (Icons.medication_rounded, const Color(0xFFFFBE0B));
+      case NotificationType.vet:
+        return (Icons.local_hospital_rounded, const Color(0xFFFF6B6B));
+      case NotificationType.grooming:
+        return (Icons.content_cut_rounded, const Color(0xFF4ECDC4));
+      case NotificationType.walk:
+        return (Icons.directions_walk_rounded, const Color(0xFF45B7D1));
+      case NotificationType.scan:
+        return (Icons.document_scanner_rounded, const Color(0xFF45B7D1));
+      case NotificationType.appUpdate:
+        return (Icons.new_releases_rounded, const Color(0xFF667EEA));
+      case NotificationType.welcome:
+        return (Icons.pets_rounded, const Color(0xFF4ECDC4));
+      case NotificationType.general:
+        return (Icons.notifications_rounded, const Color(0xFF667EEA));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final (icon, iconColor) = _iconForType(item.type);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: item.isUnread ? 0.07 : 0.03,
+              ),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Unread accent bar on the left
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 4,
+                decoration: BoxDecoration(
+                  color: item.isUnread
+                      ? colorScheme.primary
+                      : Colors.transparent,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    bottomLeft: Radius.circular(20),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Category icon with unread dot
+                      Stack(
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: iconColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(icon, color: iconColor, size: 26),
+                          ),
+                          if (item.isUnread)
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              child: Container(
+                                width: 11,
+                                height: 11,
+                                decoration: BoxDecoration(
+                                  color: colorScheme.error,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+
+                      // Title + time + message
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    item.title,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: item.isUnread
+                                          ? FontWeight.w700
+                                          : FontWeight.w600,
+                                      color: item.isUnread
+                                          ? const Color(0xFF1A1A1A)
+                                          : Colors.grey.shade600,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: item.isUnread
+                                        ? colorScheme.primary.withValues(
+                                            alpha: 0.1,
+                                          )
+                                        : Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    item.timeLabel,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: item.isUnread
+                                          ? colorScheme.primary
+                                          : Colors.grey.shade400,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              item.message,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade500,
+                                height: 1.45,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -109,147 +400,56 @@ class _NotificationsBody extends StatelessWidget {
   }
 }
 
-// --- Notification Card Widget (Used in the list) ---
-class _NotificationTileCard extends StatelessWidget {
-  final NotificationItem item;
-  final VoidCallback onTap;
-
-  const _NotificationTileCard({required this.item, required this.onTap});
+// --- Empty State ---
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        // Highlight unread items with a slight border and heavier shadow
-        border: Border.all(
-          color: item.isUnread
-              ? colorScheme.primary.withValues(alpha: 0.3)
-              : Colors.transparent,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: item.isUnread ? 0.05 : 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Stack(
-          children: [
-            // Icon Background
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colorScheme.secondaryContainer, // Arctic blue background
-              ),
-              child: Icon(
-                Icons.notifications_rounded,
-                color: colorScheme.primary, // Cobalt icon color
-                size: 24,
-              ),
-            ),
-            // Unread Dot
-            if (item.isUnread)
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: colorScheme.error, // Red dot for unread status
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        title: Text(
-          item.title,
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: item.isUnread ? colorScheme.onSurface : Colors.grey.shade700,
-            fontSize: 15,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              item.message,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              item.timeLabel,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
-            ),
-          ],
-        ),
-        trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
-      ),
-    );
-  }
-}
-
-// --- Empty State Widget ---
-class _EmptyState extends StatelessWidget {
-  final TextTheme textTheme;
-  final ColorScheme colorScheme;
-
-  const _EmptyState({required this.textTheme, required this.colorScheme});
-
-  @override
-  Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.only(top: 80),
+        padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 90,
+              height: 90,
               decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    colorScheme.primary.withValues(alpha: 0.15),
+                    colorScheme.primary.withValues(alpha: 0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
-                color: colorScheme.secondaryContainer,
               ),
               child: Icon(
                 Icons.notifications_off_outlined,
                 color: colorScheme.primary,
-                size: 36,
+                size: 40,
               ),
             ),
             const SizedBox(height: 24),
-            Text(
+            const Text(
               'All Caught Up!',
-              style: textTheme.titleLarge?.copyWith(
+              style: TextStyle(
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey.shade700,
+                color: Color(0xFF2D3142),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
-              'No new reminders or updates about your pets.',
+              'No new reminders or updates\nabout your pets.',
               textAlign: TextAlign.center,
-              style: textTheme.bodyMedium?.copyWith(
-                color: Colors.grey.shade500,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade400,
+                height: 1.5,
               ),
             ),
           ],

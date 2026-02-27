@@ -6,13 +6,15 @@ class NotificationsViewModel extends ChangeNotifier {
       title: 'Upcoming vaccination',
       message: 'Milo has a vaccination scheduled for today at 4:00 PM.',
       timeLabel: 'Just now',
+      type: NotificationType.vaccination,
       linkedDate: DateTime(2025, 1, 10),
       isUnread: true,
     ),
     NotificationItem(
       title: 'Scan reminder',
-      message: 'It’s been a week since Luna’s last skin scan.',
+      message: "It's been a week since Luna's last skin scan.",
       timeLabel: '10 min ago',
+      type: NotificationType.scan,
       isUnread: true,
     ),
   ];
@@ -22,6 +24,7 @@ class NotificationsViewModel extends ChangeNotifier {
       title: 'New feature',
       message: 'Try the new scan history feature in your Scan tab.',
       timeLabel: 'Yesterday',
+      type: NotificationType.appUpdate,
       isUnread: false,
     ),
     NotificationItem(
@@ -29,6 +32,7 @@ class NotificationsViewModel extends ChangeNotifier {
       message:
           'Thanks for joining! Add your pets to get personalized insights.',
       timeLabel: '2 days ago',
+      type: NotificationType.welcome,
       isUnread: false,
     ),
   ];
@@ -41,6 +45,10 @@ class NotificationsViewModel extends ChangeNotifier {
   bool get hasUnread =>
       _todayNotifications.any((n) => n.isUnread) ||
       _earlierNotifications.any((n) => n.isUnread);
+
+  int get unreadCount =>
+      _todayNotifications.where((n) => n.isUnread).length +
+      _earlierNotifications.where((n) => n.isUnread).length;
 
   // --- FUNCTION CALLED BY THE APP BAR BUTTON ---
   void markAllAsRead() {
@@ -66,10 +74,23 @@ class NotificationsViewModel extends ChangeNotifier {
   }
 }
 
+enum NotificationType {
+  vaccination,
+  medication,
+  vet,
+  grooming,
+  walk,
+  scan,
+  appUpdate,
+  welcome,
+  general,
+}
+
 class NotificationItem {
   final String title;
   final String message;
   final String timeLabel;
+  final NotificationType type;
   bool isUnread;
   final DateTime? linkedDate;
 
@@ -77,6 +98,7 @@ class NotificationItem {
     required this.title,
     required this.message,
     required this.timeLabel,
+    this.type = NotificationType.general,
     this.isUnread = true,
     this.linkedDate,
   });

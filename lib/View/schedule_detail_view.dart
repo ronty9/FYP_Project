@@ -275,7 +275,7 @@ class _ScheduleDetailBody extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${viewModel.formattedDay} Jan 2025 · ${event.time}',
+                                viewModel.formattedDateTime,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -344,9 +344,9 @@ class _ScheduleDetailBody extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            _IconBox(
+                            const _IconBox(
                               icon: Icons.notes_rounded,
-                              color: const Color(0xFF667EEA),
+                              color: Color(0xFF667EEA),
                             ),
                             const SizedBox(width: 16),
                             const Text(
@@ -368,15 +368,24 @@ class _ScheduleDetailBody extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.grey.shade200),
                           ),
-                          child: Text(
-                            'You can use this section to store any notes about this visit, '
-                            'such as medication, follow-up dates, or special instructions.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade600,
-                              height: 1.5,
-                            ),
-                          ),
+                          child: event.location.isNotEmpty
+                              ? Text(
+                                  event.location,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade800,
+                                    height: 1.5,
+                                  ),
+                                )
+                              : Text(
+                                  'No notes added.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade400,
+                                    height: 1.5,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
                         ),
                       ],
                     ),
@@ -391,21 +400,21 @@ class _ScheduleDetailBody extends StatelessWidget {
                           color: const Color(0xFFFFBE0B),
                         ),
                         const SizedBox(width: 16),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 'Reminder',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey,
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
-                                '30 minutes before',
-                                style: TextStyle(
+                                viewModel.reminderLabel,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: Color(0xFF1A1A1A),
@@ -420,26 +429,34 @@ class _ScheduleDetailBody extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF4CAF50,
-                            ).withValues(alpha: 0.12),
+                            color: event.reminderEnabled
+                                ? const Color(
+                                    0xFF4CAF50,
+                                  ).withValues(alpha: 0.12)
+                                : Colors.grey.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.check_circle,
+                                event.reminderEnabled
+                                    ? Icons.check_circle
+                                    : Icons.notifications_off_outlined,
                                 size: 16,
-                                color: Color(0xFF4CAF50),
+                                color: event.reminderEnabled
+                                    ? const Color(0xFF4CAF50)
+                                    : Colors.grey,
                               ),
-                              SizedBox(width: 4),
+                              const SizedBox(width: 4),
                               Text(
-                                'Active',
+                                event.reminderEnabled ? 'Active' : 'Off',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF4CAF50),
+                                  color: event.reminderEnabled
+                                      ? const Color(0xFF4CAF50)
+                                      : Colors.grey,
                                 ),
                               ),
                             ],

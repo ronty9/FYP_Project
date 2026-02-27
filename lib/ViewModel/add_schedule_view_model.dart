@@ -20,7 +20,7 @@ class AddScheduleViewModel extends BaseViewModel {
   DateTime? _endDateTime;
   DateTime? _reminderDateTime;
   bool _reminderEnabled = false;
-  ReminderDuration _reminderDuration = ReminderDuration.thirtyMinutes;
+  ReminderDuration _reminderDuration = ReminderDuration.fifteenMinutes;
 
   // Placeholder for Pet object (Change 'dynamic' to 'Pet' if you have the model imported)
   dynamic _selectedPet;
@@ -52,8 +52,8 @@ class AddScheduleViewModel extends BaseViewModel {
 
   void toggleReminder(bool value) {
     _reminderEnabled = value;
-    // Auto-calculate reminder time when enabled
-    if (value && _startDateTime != null) {
+    // Auto-calculate reminder time when enabled (skip for customTime)
+    if (value && _startDateTime != null && !_reminderDuration.isCustom) {
       _reminderDateTime = _reminderDuration.calculateReminderTime(
         _startDateTime!,
       );
@@ -63,10 +63,44 @@ class AddScheduleViewModel extends BaseViewModel {
 
   void setReminderDuration(ReminderDuration duration) {
     _reminderDuration = duration;
-    // Recalculate reminder time if reminder is enabled and start time is set
-    if (_reminderEnabled && _startDateTime != null) {
+    // Recalculate reminder time for presets; customTime is set via pickReminderDateTime
+    if (!duration.isCustom && _reminderEnabled && _startDateTime != null) {
       _reminderDateTime = duration.calculateReminderTime(_startDateTime!);
+    } else if (duration.isCustom) {
+      // Clear auto-calculated time so user must pick manually
+      _reminderDateTime = null;
     }
+    notifyListeners();
+  }
+
+  /// Opens a date + time picker so the user can choose an exact reminder time.
+  Future<void> pickReminderDateTime(BuildContext context) async {
+    final now = DateTime.now();
+    final initial = _reminderDateTime ?? _startDateTime ?? now;
+
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2024),
+      lastDate: now.add(const Duration(days: 365 * 2)),
+    );
+
+    if (selectedDate == null || !context.mounted) return;
+
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+
+    if (selectedTime == null) return;
+
+    _reminderDateTime = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
     notifyListeners();
   }
 
@@ -119,8 +153,8 @@ class AddScheduleViewModel extends BaseViewModel {
 
     if (isStart) {
       _startDateTime = result;
-      // Auto-update reminder time when start time changes
-      if (_reminderEnabled) {
+      // Auto-update reminder time when start time changes (skip for customTime)
+      if (_reminderEnabled && !_reminderDuration.isCustom) {
         _reminderDateTime = _reminderDuration.calculateReminderTime(result);
       }
     } else {
@@ -148,8 +182,10 @@ class AddScheduleViewModel extends BaseViewModel {
     }
 
     if (_reminderEnabled && _reminderDateTime == null) {
-      // Auto-calculate if not set
-      if (_startDateTime != null) {
+      if (_reminderDuration.isCustom) {
+        _showSnack(context, 'Please select a custom reminder time.');
+        return;
+      } else if (_startDateTime != null) {
         _reminderDateTime = _reminderDuration.calculateReminderTime(
           _startDateTime!,
         );
