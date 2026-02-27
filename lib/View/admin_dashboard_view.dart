@@ -97,7 +97,7 @@ class _DashboardContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // Pass the view model here
+            // Updated Stats Row (2 Columns)
             _DashboardStatsRow(viewModel: viewModel),
 
             const SizedBox(height: 32),
@@ -177,12 +177,16 @@ class _DashboardContent extends StatelessWidget {
                     fontSize: 18,
                   ),
                 ),
-                Text(
-                  'View All',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
+                GestureDetector(
+                  // Clickable View All button
+                  onTap: () => viewModel.onViewAllActivityPressed(context),
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -269,7 +273,7 @@ class _AdminWelcomeBanner extends StatelessWidget {
   }
 }
 
-// --- WIDGET: Stats Row (UPDATED) ---
+// --- WIDGET: Stats Row (UPDATED to 2 Columns) ---
 class _DashboardStatsRow extends StatelessWidget {
   final AdminDashboardViewModel viewModel;
 
@@ -281,31 +285,19 @@ class _DashboardStatsRow extends StatelessWidget {
       children: [
         Expanded(
           child: _StatCard(
-            label: 'Users',
-            // Display '...' while loading, otherwise the actual number
+            label: 'Total Users',
             value: viewModel.isLoadingStats ? '...' : '${viewModel.userCount}',
             icon: Icons.group_rounded,
             color: const Color(0xFF6C63FF),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Expanded(
           child: _StatCard(
-            label: 'Scans',
-            // Display '...' while loading, otherwise the actual number
+            label: 'Total Scans',
             value: viewModel.isLoadingStats ? '...' : '${viewModel.scanCount}',
             icon: Icons.center_focus_strong_rounded,
             color: const Color(0xFF29B6F6),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Placeholder for Issues (0 for now)
-        const Expanded(
-          child: _StatCard(
-            label: 'Issues',
-            value: '0',
-            icon: Icons.warning_rounded,
-            color: Color(0xFFFF7043),
           ),
         ),
       ],
@@ -466,7 +458,6 @@ class _AdminActionCard extends StatelessWidget {
   }
 }
 
-// --- WIDGET: Recent Activity List (with Stream) ---
 class _RecentActivityList extends StatelessWidget {
   const _RecentActivityList();
 
@@ -488,7 +479,7 @@ class _RecentActivityList extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('system_activity_logs')
             .orderBy('timestamp', descending: true)
-            .limit(10)
+            .limit(4) // UPDATED LIMIT: Shows only top 4 logs
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {

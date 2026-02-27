@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'base_view_model.dart';
+import '../View/activity_log_view.dart';
 
 class AdminDashboardViewModel extends BaseViewModel {
   int _userCount = 0;
@@ -22,7 +23,6 @@ class AdminDashboardViewModel extends BaseViewModel {
 
     try {
       // 1. Count Users
-      // Using .count() is cheaper and faster than fetching all documents
       final userSnapshot = await FirebaseFirestore.instance
           .collection('user')
           .count()
@@ -30,10 +30,9 @@ class AdminDashboardViewModel extends BaseViewModel {
 
       _userCount = userSnapshot.count ?? 0;
 
-      // 2. Count Scans (assuming 'analysis_records' is the collection name)
-      // Change 'analysis_records' to your actual scan collection name if different
+      // 2. Count Total Scans from ScanHistory collection
       final scanSnapshot = await FirebaseFirestore.instance
-          .collection('analysis_records')
+          .collection('ScanHistory')
           .count()
           .get();
 
@@ -73,4 +72,12 @@ class AdminDashboardViewModel extends BaseViewModel {
   void onLogoutPressed(BuildContext context) {
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
-}
+
+  // MOVING THIS INSIDE THE CLASS
+  void onViewAllActivityPressed(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ActivityLogView()),
+    );
+  }
+} // <-- This is the end of the class now
