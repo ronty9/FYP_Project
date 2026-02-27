@@ -19,7 +19,29 @@ import os
 import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from PIL import Image
+from pydantic import BaseModel
+
+# Firebase Admin SDK
+_firebase_admin_ready = False
+try:
+    import firebase_admin
+    from firebase_admin import auth as firebase_auth_admin
+    from firebase_admin import credentials
+
+    _SA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "serviceAccount.json")
+    if os.path.exists(_SA_PATH):
+        _cred = credentials.Certificate(_SA_PATH)
+        firebase_admin.initialize_app(_cred)
+        _firebase_admin_ready = True
+        print("  Firebase Admin SDK initialised via serviceAccount.json")
+    else:
+        print("  WARNING: backend/serviceAccount.json not found. "
+              "/reset-password endpoint will be unavailable. "
+              "Download it from Firebase Console → Project Settings → Service Accounts.")
+except ImportError:
+    print("  WARNING: firebase-admin not installed. Run: pip install firebase-admin")
 
 # Lazy-import TensorFlow so startup errors are easier to diagnose
 try:
@@ -248,6 +270,43 @@ async def predict(file: UploadFile = File(...)):
         "species": {"label": sp_label, "confidence": sp_conf},
         "breed_predictions": _top_k(br_probs, br_labels, k=5),
     }
+
+
+# ---------------------------------------------------------------------------
+# 3. PASSWORD RESET ENDPOINT
+# ---------------------------------------------------------------------------
+class _ResetPasswordRequest(BaseModel):
+    email: str
+    new_password: str
+
+
+@app.post("/reset-password", tags=["auth"])
+async def reset_password(body: _ResetPasswordRequest):
+    """
+    Reset a user's Firebase Auth password in-app after OTP verification.
+    Requires backend/serviceAccount.json (Firebase Admin SDK).
+    """
+    if not _firebase_admin_ready:
+        raise HTTPException(
+            status_code=503,
+            detail="Password reset service unavailable: serviceAccount.json missing on server.",
+        )
+
+    email = body.email.strip().lower()
+    new_password = body.new_password
+
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+
+    try:
+        user = firebase_auth_admin.get_user_by_email(email)
+        firebase_auth_admin.update_user(user.uid, password=new_password)
+        print(f"[RESET] Password updated for uid={user.uid}")
+        return {"success": True, "message": "Password updated successfully."}
+    except firebase_auth_admin.UserNotFoundError:
+        raise HTTPException(status_code=404, detail="No account found with this email.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update password: {e}")
 
 
 # ---------------------------------------------------------------------------

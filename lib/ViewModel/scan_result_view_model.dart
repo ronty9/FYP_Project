@@ -24,9 +24,12 @@ class ScanResultViewModel extends BaseViewModel {
   String _summaryText = '';
   String _detectedSpecies = '';
 
-  // --- New Loading State for Saving ---
+  // --- Loading & Error State for Saving ---
   bool _isSaving = false;
   bool get isSaving => _isSaving;
+
+  String? _saveError;
+  String? get saveError => _saveError;
 
   List<ScanPrediction> get predictions => _predictions;
   String get detailsTitle => _detailsTitle;
@@ -123,12 +126,36 @@ class ScanResultViewModel extends BaseViewModel {
     // Only save if the prediction actually succeeded
     if (topPrediction != null) {
       _isSaving = true;
+      _saveError = null;
       notifyListeners();
 
       await _saveToFirebase();
 
       _isSaving = false;
       notifyListeners();
+
+      // Show error snackbar and abort navigation if save failed
+      if (_saveError != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $_saveError'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Continue anyway',
+              textColor: Colors.white,
+              onPressed: () {
+                if (isHome) {
+                  Navigator.popUntil(context, (route) => route.isFirst);
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+            ),
+          ),
+        );
+        return;
+      }
     }
 
     if (context.mounted) {
@@ -144,28 +171,29 @@ class ScanResultViewModel extends BaseViewModel {
     final user = FirebaseAuth.instance.currentUser;
     final top = topPrediction;
 
-    if (user == null || top == null) return;
+    if (user == null) {
+      _saveError = 'You must be logged in to save scan history.';
+      return;
+    }
+    if (top == null) return;
 
     try {
       final isDisease = scanType == ScanType.skinDisease;
 
-      // Aligned with the 'Case' / 'ScanHistory' table in your ERD
       await FirebaseFirestore.instance.collection('ScanHistory').add({
         'userId': user.uid,
         'scanType': isDisease ? 'skinDisease' : 'breed',
-        'topLabel': top.label, // Maps to caseResult
-        'confidence': top.confidence, // Maps to ResultPercentage
-        'date': FieldValue.serverTimestamp(), // Maps to createdAt
+        'topLabel': top.label,
+        'confidence': top.confidence,
+        'date': FieldValue.serverTimestamp(),
         'diseaseId': isDisease ? top.label : '',
         'breedId': !isDisease ? top.label : '',
         'caseDescription': _summaryText,
         'caseStatus': 'Completed',
-        'imagePath':
-            '', // To be updated if you upload images to Firebase Storage
+        'imagePath': '',
       });
-      print("DEBUG: Scan history successfully saved to Firebase!");
     } catch (e) {
-      print("DEBUG: Failed to save scan history: $e");
+      _saveError = e.toString();
     }
   }
 }

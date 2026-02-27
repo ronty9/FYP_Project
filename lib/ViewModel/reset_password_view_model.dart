@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+
+import '../services/ai_service.dart';
 
 class ResetPasswordViewModel extends ChangeNotifier {
   final TextEditingController newPasswordController = TextEditingController();
@@ -55,87 +58,75 @@ class ResetPasswordViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Find User in Firestore to verify they exist
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('user')
-          .where('userEmail', isEqualTo: _email)
-          .limit(1)
-          .get();
-
-      if (querySnapshot.docs.isEmpty) {
-        isLoading = false;
-        errorMessage = 'User not found.';
-        notifyListeners();
-        return;
-      }
-
-      final docId = querySnapshot.docs.first.id;
-      final newPassword = newPasswordController.text;
-
-      // 2. Store the new password temporarily (for manual update via reset link)
-      // In production, you should hash this and use Cloud Functions
-      await FirebaseFirestore.instance
-          .collection('pending_password_resets')
-          .doc(docId)
-          .set({
-            'email': _email,
-            'requestedPassword':
-                newPassword, // Store securely/hash in production!
-            'createdAt': FieldValue.serverTimestamp(),
-            'expiresAt': DateTime.now().add(const Duration(hours: 1)),
-            'used': false,
-            'verifiedViaOTP': true,
-          });
-
-      // 3. Send Firebase Auth password reset email
-      // User will click this link to complete the password reset
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: _email);
+      final uri = Uri.parse('${AiService.baseUrl}/reset-password');
+      final response = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'email': _email,
+              'new_password': newPasswordController.text,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
 
       isLoading = false;
-      notifyListeners();
 
-      if (context.mounted) {
-        // Show success message with instructions
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            icon: const Icon(
-              Icons.check_circle_outline,
-              color: Colors.green,
-              size: 64,
-            ),
-            title: const Text(
-              'Almost Done!',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            content: Text(
-              'We\'ve sent a password reset link to $_email.\n\n'
-              'Please check your email and click the link to complete '
-              'your password reset.\n\n'
-              'After clicking the link, you can sign in with your new password.',
-              textAlign: TextAlign.center,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  // Navigate back to login screen
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                child: const Text(
-                  'Back to Login',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        );
+      if (response.statusCode == 200) {
+        notifyListeners();
+        if (context.mounted) {
+          _showSuccessDialog(context);
+        }
+      } else {
+        // Try to extract a readable error from the response body
+        String detail = 'Failed to reset password.';
+        try {
+          final body = jsonDecode(response.body) as Map<String, dynamic>;
+          detail = body['detail']?.toString() ?? detail;
+        } catch (_) {}
+        errorMessage = detail;
+        notifyListeners();
       }
     } catch (e) {
       isLoading = false;
-      errorMessage = 'Failed to initiate password reset: $e';
+      errorMessage =
+          'Could not reach server. Make sure you are on the same '
+          'network as the backend.';
       notifyListeners();
     }
+  }
+
+  void _showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(
+          Icons.check_circle_outline,
+          color: Colors.green,
+          size: 64,
+        ),
+        title: const Text(
+          'Password Reset!',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Your password has been updated successfully. '
+          'Please sign in with your new password.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
+            child: const Text(
+              'Back to Login',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

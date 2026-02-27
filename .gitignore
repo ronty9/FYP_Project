@@ -49,3 +49,4 @@ app.*.map.json
 
 # API Keys and Secrets
 lib/config/api_keys.dart
+backend/serviceAccount.json

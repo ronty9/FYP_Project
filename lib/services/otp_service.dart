@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../config/api_keys.example.dart';
+import '../config/api_keys.dart';
 
 /// Service for handling OTP generation, verification, and email sending via SendGrid
 class OtpService {
@@ -33,7 +33,9 @@ class OtpService {
         'email': email.toLowerCase().trim(),
         'otp': otp,
         'createdAt': FieldValue.serverTimestamp(),
-        'expiresAt': DateTime.now().add(const Duration(minutes: 10)),
+        'expiresAt': Timestamp.fromDate(
+          DateTime.now().add(const Duration(minutes: 10)),
+        ),
         'verified': false,
         'attempts': 0,
       });
@@ -268,7 +270,7 @@ class OtpService {
     try {
       final expiredOTPs = await _firestore
           .collection('otps')
-          .where('expiresAt', isLessThan: DateTime.now())
+          .where('expiresAt', isLessThan: Timestamp.fromDate(DateTime.now()))
           .get();
 
       for (var doc in expiredOTPs.docs) {
