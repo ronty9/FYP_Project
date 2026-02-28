@@ -91,50 +91,9 @@ class _HomeDashboardContent extends StatelessWidget {
                             const SizedBox(height: 28),
 
                             // --- Your Pets (DYNAMIC) ---
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const _SectionHeader(
-                                  title: 'Your Pets',
-                                  icon: Icons.pets,
-                                ),
-                                GestureDetector(
-                                  onTap: () => dashboardViewModel.openPetsList(
-                                    context,
-                                    homeViewModel,
-                                  ),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.primary.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          'View all',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: colorScheme.primary,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Icon(
-                                          Icons.arrow_forward_ios_rounded,
-                                          size: 12,
-                                          color: colorScheme.primary,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            const _SectionHeader(
+                              title: 'Your Pets',
+                              icon: Icons.pets,
                             ),
                             const SizedBox(height: 14),
 
@@ -142,21 +101,46 @@ class _HomeDashboardContent extends StatelessWidget {
                               _buildEmptyPetsState(context, dashboardViewModel)
                             else
                               SizedBox(
-                                height: 200,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: dashboardViewModel.pets.length,
-                                  itemBuilder: (context, index) {
-                                    final pet = dashboardViewModel.pets[index];
-                                    final colors = _getPetCardColors(index);
-                                    return _PetHomeCard(
-                                      pet: pet,
-                                      colors: colors,
-                                      onTap: () => _openPetDetail(
-                                        context,
-                                        pet,
-                                        dashboardViewModel,
-                                      ),
+                                height:
+                                    215, // Adjusted to fit the bigger avatar
+                                child: Builder(
+                                  builder: (context) {
+                                    final petsList = dashboardViewModel.pets;
+                                    final bool showMoreCard =
+                                        petsList.length > 3;
+                                    final int itemCount = showMoreCard
+                                        ? 4
+                                        : petsList.length;
+
+                                    return ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: itemCount,
+                                      itemBuilder: (context, index) {
+                                        // If we reach the 4th item, render the "+X More" card
+                                        if (showMoreCard && index == 3) {
+                                          final remaining = petsList.length - 3;
+                                          return _ViewMorePetsCard(
+                                            remainingCount: remaining,
+                                            onTap: () =>
+                                                dashboardViewModel.openPetsList(
+                                                  context,
+                                                  homeViewModel,
+                                                ),
+                                          );
+                                        }
+
+                                        final pet = petsList[index];
+                                        final colors = _getPetCardColors(index);
+                                        return _PetHomeCard(
+                                          pet: pet,
+                                          colors: colors,
+                                          onTap: () => _openPetDetail(
+                                            context,
+                                            pet,
+                                            dashboardViewModel,
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
                                 ),
@@ -788,7 +772,7 @@ class _QuickActionButton extends StatelessWidget {
   }
 }
 
-// --- Pet Card Widget ---
+// --- Pet Card Widget (Original Layout, Adjusted Sizes) ---
 class _PetHomeCard extends StatelessWidget {
   final PetHomeInfo pet;
   final List<Color> colors;
@@ -804,7 +788,7 @@ class _PetHomeCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 150,
-        margin: const EdgeInsets.only(right: 14),
+        margin: const EdgeInsets.only(right: 14, bottom: 8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(22),
@@ -822,7 +806,7 @@ class _PetHomeCard extends StatelessWidget {
           children: [
             // Gradient top background
             Container(
-              height: 70,
+              height: 80, // Slightly taller to fit the bigger avatar
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: colors,
@@ -865,9 +849,9 @@ class _PetHomeCard extends StatelessWidget {
               ),
             ),
 
-            // Content below the avatar
+            // Content below the avatar (Moved down)
             Positioned.fill(
-              top: 90,
+              top: 115, // Increased top padding to push text down
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Column(
@@ -877,19 +861,19 @@ class _PetHomeCard extends StatelessWidget {
                       pet.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 15,
+                        fontSize: 16,
                         color: Color(0xFF2D3142),
                         letterSpacing: -0.2,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 6),
                     // Breed badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
-                        vertical: 3,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: colors.first.withValues(alpha: 0.10),
@@ -898,7 +882,7 @@ class _PetHomeCard extends StatelessWidget {
                       child: Text(
                         pet.species,
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           color: colors.first,
                           fontWeight: FontWeight.w600,
                         ),
@@ -911,16 +895,19 @@ class _PetHomeCard extends StatelessWidget {
               ),
             ),
 
-            // Floating avatar (overlapping gradient and content)
+            // Floating avatar (Made larger)
             Positioned(
               left: 0,
               right: 0,
-              top: 32,
+              top: 30,
               child: Center(
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 4,
+                    ), // Thicker border
                     boxShadow: [
                       BoxShadow(
                         color: colors.first.withValues(alpha: 0.3),
@@ -930,16 +917,16 @@ class _PetHomeCard extends StatelessWidget {
                     ],
                   ),
                   child: CircleAvatar(
-                    radius: 28,
+                    radius: 36, // INCREASED FROM 28 TO 36
                     backgroundColor: colors.first.withValues(alpha: 0.2),
                     backgroundImage: hasPhoto
                         ? NetworkImage(pet.photoUrl!)
                         : null,
                     child: !hasPhoto
-                        ? Icon(
+                        ? const Icon(
                             Icons.pets_rounded,
                             color: Colors.white,
-                            size: 26,
+                            size: 32, // Made placeholder icon bigger too
                           )
                         : null,
                   ),
@@ -981,12 +968,79 @@ class _PetHomeCard extends StatelessWidget {
 
             // Chevron indicator (bottom-right)
             Positioned(
-              bottom: 10,
-              right: 10,
+              bottom: 14,
+              right: 14,
               child: Icon(
                 Icons.arrow_forward_ios_rounded,
-                size: 12,
+                size: 14,
                 color: colors.first.withValues(alpha: 0.35),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- View More Pets Card (NEW WIDGET) ---
+class _ViewMorePetsCard extends StatelessWidget {
+  final int remainingCount;
+  final VoidCallback onTap;
+
+  const _ViewMorePetsCard({required this.remainingCount, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 120, // Slightly slimmer than the standard 150 card
+        margin: const EdgeInsets.only(right: 14, bottom: 8),
+        decoration: BoxDecoration(
+          color: colorScheme.primary.withValues(alpha: 0.04), // soft background
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: colorScheme.primary.withValues(alpha: 0.15),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  '+$remainingCount',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'View All',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: colorScheme.primary,
               ),
             ),
           ],

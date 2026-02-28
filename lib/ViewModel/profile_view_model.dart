@@ -10,13 +10,14 @@ import '../View/privacy_security_view.dart';
 import 'base_view_model.dart';
 
 class ProfileViewModel extends BaseViewModel {
-  // --- State Variables (Not Final anymore) ---
+  // --- State Variables ---
   String _userName = 'Loading...';
   String _email = '';
   String? _profileImageUrl;
+
   int _totalPets = 0;
-  final int _totalScans = 0; // Placeholder until you have a 'scans' collection
-  int _daysActive = 0; // Placeholder
+  int _totalScans = 0;
+  int _daysActive = 0;
 
   // --- Getters ---
   String get userName => _userName;
@@ -45,17 +46,17 @@ class ProfileViewModel extends BaseViewModel {
     // 1. Set Email directly from Auth
     _email = authUser.email ?? 'No Email';
 
-    // Calculate Days Active (Simple approximation based on creation time)
+    // 2. Calculate Days Active (Based on Auth creation time)
     if (authUser.metadata.creationTime != null) {
       final difference = DateTime.now().difference(
         authUser.metadata.creationTime!,
       );
-      _daysActive = difference.inDays;
+      // If they just created the account today, show 1 day instead of 0
+      _daysActive = difference.inDays == 0 ? 1 : difference.inDays;
     }
 
     try {
-      // 2. Fetch User Details from Firestore
-      // We query the 'user' collection where 'providerId' matches the Auth UID
+      // 3. Fetch User Details from Firestore
       final userSnapshot = await FirebaseFirestore.instance
           .collection('user')
           .where('providerId', isEqualTo: authUser.uid)
@@ -71,19 +72,27 @@ class ProfileViewModel extends BaseViewModel {
         // Save the Custom User ID (e.g. U000001) for fetching pets
         final customUserId = userSnapshot.docs.first.id;
 
-        // 3. Fetch Total Pets Count
-        // Assuming you have a 'pets' collection where 'ownerId' or 'userId' links to the user
+        // 4. Fetch Total Pets Count (Using count() is faster and cheaper)
         final petsSnapshot = await FirebaseFirestore.instance
             .collection(
-              'pets',
-            ) // Change this if your collection is named differently
+              'pet',
+            ) // Using singular 'pet' based on your previous code
             .where('userId', isEqualTo: customUserId)
+            .count()
             .get();
-
-        _totalPets = petsSnapshot.docs.length;
+        _totalPets = petsSnapshot.count ?? 0;
       }
+
+      // 5. Fetch Total Scans Count
+      // The ScanHistory collection uses the Auth UID (authUser.uid)
+      final scansSnapshot = await FirebaseFirestore.instance
+          .collection('ScanHistory')
+          .where('userId', isEqualTo: authUser.uid)
+          .count()
+          .get();
+      _totalScans = scansSnapshot.count ?? 0;
     } catch (e) {
-      debugPrint("Error fetching profile: $e");
+      debugPrint("Error fetching profile data: $e");
       _userName = 'Error loading';
     }
 
