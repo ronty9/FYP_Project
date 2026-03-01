@@ -61,10 +61,15 @@ except ImportError as exc:
     ) from exc
 
 # ---------------------------------------------------------------------------
-# Paths
+# Paths — works both locally and inside the Docker / Cloud Run container
 # ---------------------------------------------------------------------------
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_MODELS_DIR = os.path.join(_HERE, "..", "lib", "AI", "models")
+
+# Docker / Cloud Run: models sit next to main.py in ./models/
+# Local dev:          models sit in ../lib/AI/models/
+_DOCKER_MODELS = os.path.join(_HERE, "models")
+_LOCAL_MODELS = os.path.join(_HERE, "..", "lib", "AI", "models")
+_MODELS_DIR = _DOCKER_MODELS if os.path.isdir(_DOCKER_MODELS) else _LOCAL_MODELS
 
 
 def _model_path(name: str) -> str:

@@ -41,12 +41,16 @@ class AiService {
   AiService._();
 
   // ── Base URL ─────────────────────────────────────────────────────────────
-  // Android emulator  → 10.0.2.2  (maps to host's 127.0.0.1)
-  // iOS simulator     → 127.0.0.1
-  // Physical device   → your computer's local-network IP, e.g. 192.168.1.100
+  // Cloud Run (production) → replace with your Cloud Run URL after deploy:
+  //   static String baseUrl = 'https://petscan-ai-XXXXXX-as.a.run.app';
   //
-  // Override [baseUrl] before calling [predictBreed] if needed.
-  static String baseUrl = 'http://172.20.10.2:8000';
+  // Local development:
+  //   Android emulator  → http://10.0.2.2:8000
+  //   iOS simulator     → http://127.0.0.1:8000
+  //   Physical device   → http://<your-local-ip>:8000
+  //
+  // After deploying to Cloud Run, replace the URL below with your Cloud Run URL.
+  static String baseUrl = 'https://petscan-ai-756171113352.asia-southeast1.run.app';
 
   /// Send [imageFile] to the backend and return species + breed predictions.
   ///

@@ -50,3 +50,10 @@ app.*.map.json
 # API Keys and Secrets
 lib/config/api_keys.dart
 backend/serviceAccount.json
+
+# Python
+.venv/
+__pycache__/
+
+# Docker build copies of AI models (originals in lib/AI/models/)
+backend/models/
