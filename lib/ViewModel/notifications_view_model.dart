@@ -95,6 +95,7 @@ class NotificationsViewModel extends ChangeNotifier {
           isUnread: !isRead,
           linkedDate: linkedDate,
           createdAt: createdAt,
+          isFromSchedule: false, // Mark as real notification
         );
 
         if (createdAt != null && createdAt.isAfter(todayStart)) {
@@ -140,7 +141,8 @@ class NotificationsViewModel extends ChangeNotifier {
           notifMessage = description.isNotEmpty
               ? description
               : 'Scheduled for ${_formatScheduleDate(startDateTime)}.';
-          isUnread = true;
+          isUnread =
+              false; // FIX: Upcoming schedules should not trigger the red dot permanently
         } else {
           notifTitle = 'Reminder: $title';
           notifMessage = description.isNotEmpty
@@ -158,6 +160,7 @@ class NotificationsViewModel extends ChangeNotifier {
           isUnread: isUnread,
           linkedDate: startDateTime,
           createdAt: startDateTime,
+          isFromSchedule: true, // Mark to prevent database crash!
         );
 
         // Upcoming (today or future) → upcoming section; past → earlier
@@ -215,29 +218,38 @@ class NotificationsViewModel extends ChangeNotifier {
     bool anyChanged = false;
 
     for (final item in _upcomingNotifications) {
-      if (item.isUnread && item.id != null) {
-        batch.update(
-          FirebaseFirestore.instance.collection('notifications').doc(item.id),
-          {'isRead': true},
-        );
-        item.isUnread = false;
+      if (item.isUnread) {
+        item.isUnread = false; // Update UI immediately
         anyChanged = true;
+
+        // FIX: Only update database if it's a REAL notification
+        if (item.id != null && !item.isFromSchedule) {
+          batch.update(
+            FirebaseFirestore.instance.collection('notifications').doc(item.id),
+            {'isRead': true},
+          );
+        }
       }
     }
+
     for (final item in _earlierNotifications) {
-      if (item.isUnread && item.id != null) {
-        batch.update(
-          FirebaseFirestore.instance.collection('notifications').doc(item.id),
-          {'isRead': true},
-        );
-        item.isUnread = false;
+      if (item.isUnread) {
+        item.isUnread = false; // Update UI immediately
         anyChanged = true;
+
+        // FIX: Only update database if it's a REAL notification
+        if (item.id != null && !item.isFromSchedule) {
+          batch.update(
+            FirebaseFirestore.instance.collection('notifications').doc(item.id),
+            {'isRead': true},
+          );
+        }
       }
     }
 
     if (anyChanged) {
       try {
-        await batch.commit();
+        await batch.commit(); // This will no longer crash!
       } catch (e) {
         debugPrint('Error marking all as read: $e');
       }
@@ -250,7 +262,8 @@ class NotificationsViewModel extends ChangeNotifier {
     item.isUnread = false;
     notifyListeners();
 
-    if (item.id != null) {
+    // FIX: Prevent database crash
+    if (item.id != null && !item.isFromSchedule) {
       try {
         await FirebaseFirestore.instance
             .collection('notifications')
@@ -267,7 +280,8 @@ class NotificationsViewModel extends ChangeNotifier {
     _earlierNotifications.remove(item);
     notifyListeners();
 
-    if (item.id != null) {
+    // FIX: Prevent database crash
+    if (item.id != null && !item.isFromSchedule) {
       try {
         await FirebaseFirestore.instance
             .collection('notifications')
@@ -311,8 +325,6 @@ class NotificationsViewModel extends ChangeNotifier {
     }
   }
 
-  /// Create a notification record in Firestore.
-  /// Call this when a schedule reminder is created.
   static Future<void> createNotificationRecord({
     required String userId,
     required String title,
@@ -363,6 +375,8 @@ class NotificationItem {
   bool isUnread;
   final DateTime? linkedDate;
   final DateTime? createdAt;
+  final bool
+  isFromSchedule; // NEW: Tells the app if this is a real notification or a schedule
 
   NotificationItem({
     this.id,
@@ -373,5 +387,6 @@ class NotificationItem {
     this.isUnread = true,
     this.linkedDate,
     this.createdAt,
+    this.isFromSchedule = false,
   });
 }

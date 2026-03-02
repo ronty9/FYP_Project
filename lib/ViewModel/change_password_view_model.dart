@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ChangePasswordViewModel extends ChangeNotifier {
   // Text Controllers
@@ -29,13 +30,23 @@ class ChangePasswordViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- Logic to Update Password ---
+  // --- Real Firebase Logic to Update Password ---
   Future<void> updatePassword(BuildContext context) async {
-    // 1. Basic Validation
+    // 1. Basic Local Validation
     if (currentPassController.text.isEmpty ||
         newPassController.text.isEmpty ||
         confirmPassController.text.isEmpty) {
       _showSnackBar(context, 'Please fill in all fields.', isError: true);
+      return;
+    }
+
+    // ⭐ NEW LOGIC: Prevent using the same password ⭐
+    if (newPassController.text == currentPassController.text) {
+      _showSnackBar(
+        context,
+        'New password must be different from the current password.',
+        isError: true,
+      );
       return;
     }
 
@@ -53,19 +64,61 @@ class ChangePasswordViewModel extends ChangeNotifier {
       return;
     }
 
-    // 2. Simulate Loading / API Call
+    // 2. Start Loading State
     isLoading = true;
     notifyListeners();
 
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
+    try {
+      // Get the currently logged in user
+      User? user = FirebaseAuth.instance.currentUser;
 
-    isLoading = false;
-    notifyListeners();
+      if (user != null && user.email != null) {
+        // 3. Re-authenticate the user with their CURRENT password
+        AuthCredential credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: currentPassController.text,
+        );
 
-    // 3. Success Feedback & Navigation
-    if (context.mounted) {
-      _showSnackBar(context, 'Password updated successfully!');
-      Navigator.pop(context); // Go back to previous screen
+        await user.reauthenticateWithCredential(credential);
+
+        // 4. If re-auth is successful, update to the NEW password
+        await user.updatePassword(newPassController.text);
+
+        // 5. Success Feedback & Navigation
+        isLoading = false;
+        notifyListeners();
+
+        if (context.mounted) {
+          _showSnackBar(context, 'Password updated successfully!');
+          Navigator.pop(context); // Go back to profile screen
+        }
+      } else {
+        throw Exception("No user logged in.");
+      }
+    } on FirebaseAuthException catch (e) {
+      isLoading = false;
+      notifyListeners();
+
+      // Handle specific Firebase errors
+      String errorMessage = 'An error occurred. Please try again.';
+      if (e.code == 'invalid-credential' || e.code == 'wrong-password') {
+        errorMessage = 'Your current password is incorrect.';
+      } else if (e.code == 'weak-password') {
+        errorMessage = 'Your new password is too weak.';
+      } else if (e.code == 'requires-recent-login') {
+        errorMessage =
+            'Please log out and log in again to change your password.';
+      }
+
+      if (context.mounted) {
+        _showSnackBar(context, errorMessage, isError: true);
+      }
+    } catch (e) {
+      isLoading = false;
+      notifyListeners();
+      if (context.mounted) {
+        _showSnackBar(context, 'Error: $e', isError: true);
+      }
     }
   }
 

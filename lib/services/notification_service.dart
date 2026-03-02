@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Added SharedPreferences
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:flutter/material.dart';
@@ -97,6 +98,20 @@ class NotificationService {
     required String body,
     required DateTime scheduledTime,
   }) async {
+    // 1. CHECK USER PREFERENCES FIRST!
+    final prefs = await SharedPreferences.getInstance();
+    final allowNotifications = prefs.getBool('allowPushNotifications') ?? true;
+
+    // Abort completely if the user has disabled notifications in settings
+    if (!allowNotifications) {
+      debugPrint('⚠️ Push notifications disabled by user. Schedule aborted.');
+      return;
+    }
+
+    // Fetch Sound and Vibrate preferences
+    final playSound = prefs.getBool('playSound') ?? true;
+    final vibrate = prefs.getBool('vibrate') ?? true;
+
     if (!_initialized) await initialize(null);
 
     // Generate a unique notification ID from the schedule ID
@@ -116,7 +131,7 @@ class NotificationService {
       title,
       body,
       tzDateTime,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'schedule_reminders',
           'Schedule Reminders',
@@ -124,11 +139,13 @@ class NotificationService {
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
+          playSound: playSound, // Apply User's Sound Preference
+          enableVibration: vibrate, // Apply User's Vibrate Preference
         ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
-          presentSound: true,
+          presentSound: playSound, // Apply User's Sound Preference for iOS
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

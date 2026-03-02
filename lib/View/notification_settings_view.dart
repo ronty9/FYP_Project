@@ -51,51 +51,8 @@ class _NotificationSettingsBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- 1. Reminders Section ---
-              const _SectionHeader(title: 'Health Reminders'),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _NotificationTile(
-                      title: 'Medication',
-                      subtitle: 'Daily pill & medicine alerts',
-                      icon: Icons.medication_liquid_rounded,
-                      iconColor: Colors.orange,
-                      value: viewModel.medicationReminders,
-                      onChanged: viewModel.toggleMedication,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Divider(height: 1, color: Colors.grey.shade100),
-                    ),
-                    _NotificationTile(
-                      title: 'Vaccinations',
-                      subtitle: 'Upcoming booster shots',
-                      icon: Icons.vaccines_rounded,
-                      iconColor: colorScheme.primary, // Cobalt Blue
-                      value: viewModel.vaccinationReminders,
-                      onChanged: viewModel.toggleVaccination,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // --- 2. Other Updates Section ---
-              const _SectionHeader(title: 'App Updates'),
+              // --- 1. Master Controls Section ---
+              const _SectionHeader(title: 'Master Controls'),
               const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
@@ -110,12 +67,60 @@ class _NotificationSettingsBody extends StatelessWidget {
                   ],
                 ),
                 child: _NotificationTile(
-                  title: 'General News',
-                  subtitle: 'Tips, trends & pet health news',
-                  icon: Icons.newspaper_rounded,
-                  iconColor: colorScheme.tertiary, // Usually Teal/Green
-                  value: viewModel.generalUpdates,
-                  onChanged: viewModel.toggleGeneralUpdates,
+                  title: 'Push Notifications',
+                  subtitle: 'Enable schedule reminders on this device',
+                  icon: Icons.notifications_active_rounded,
+                  iconColor: colorScheme.primary, // Cobalt Blue
+                  value: viewModel.allowPushNotifications,
+                  onChanged: viewModel.togglePushNotifications,
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // --- 2. Device Behavior Section ---
+              const _SectionHeader(title: 'Device Behavior'),
+              const SizedBox(height: 12),
+              // We wrap this in an Opacity widget to make it look "disabled"
+              // if the master switch is turned off.
+              Opacity(
+                opacity: viewModel.allowPushNotifications ? 1.0 : 0.5,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _NotificationTile(
+                        title: 'Play Sound',
+                        subtitle: 'Ring when a reminder triggers',
+                        icon: Icons.volume_up_rounded,
+                        iconColor: Colors.orange,
+                        value: viewModel.playSound,
+                        onChanged: viewModel.togglePlaySound,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Divider(height: 1, color: Colors.grey.shade100),
+                      ),
+                      _NotificationTile(
+                        title: 'Vibrate',
+                        subtitle: 'Vibrate phone on alert',
+                        icon: Icons.vibration_rounded,
+                        iconColor: Colors.teal,
+                        value: viewModel.vibrate,
+                        onChanged: viewModel.toggleVibrate,
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
