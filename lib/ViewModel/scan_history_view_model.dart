@@ -31,13 +31,19 @@ class ScanHistoryViewModel extends BaseViewModel {
     _fetchHistoryFromFirebase();
   }
 
-  List<ScanHistoryItem> _history = [];
+  // --- NEW: Separate Master List and Filtered List ---
+  List<ScanHistoryItem> _allHistory = [];
+  List<ScanHistoryItem> _filteredHistory = [];
 
-  List<ScanHistoryItem> get history => List.unmodifiable(_history);
+  // Active filter states
+  DateTime? activeFilterDate;
+  ScanType? activeFilterType;
 
-  bool get hasHistory => _history.isNotEmpty;
+  // The UI will now listen to the FILTERED list
+  List<ScanHistoryItem> get history => List.unmodifiable(_filteredHistory);
+  bool get hasHistory => _filteredHistory.isNotEmpty;
 
-  // --- FETCH DATA FROM FIREBASE (FAIL-PROOF) ---
+  // --- FETCH DATA FROM FIREBASE ---
   void _fetchHistoryFromFirebase() {
     runAsync(() async {
       final user = FirebaseAuth.instance.currentUser;
@@ -47,7 +53,6 @@ class ScanHistoryViewModel extends BaseViewModel {
       }
 
       try {
-        // We removed .orderBy() to bypass the Firebase Index Error!
         final snapshot = await FirebaseFirestore.instance
             .collection('ScanHistory')
             .where('userId', isEqualTo: user.uid)
@@ -56,13 +61,11 @@ class ScanHistoryViewModel extends BaseViewModel {
         final fetchedList = snapshot.docs.map((doc) {
           final data = doc.data();
 
-          // 1. Determine Scan Type
           final scanTypeStr = data['scanType'] as String?;
           final type = scanTypeStr == 'breed'
               ? ScanType.breed
               : ScanType.skinDisease;
 
-          // 2. Format Timestamp to readable String
           final timestamp = data['date'] as Timestamp?;
           final dateTime = timestamp?.toDate() ?? DateTime.now();
           final dateStr = _formatDate(timestamp);
@@ -77,18 +80,52 @@ class ScanHistoryViewModel extends BaseViewModel {
           );
         }).toList();
 
-        // 3. Sort the list locally in Flutter (Newest first)
+        // Sort the master list locally (Newest first)
         fetchedList.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-        // 4. Update the UI
-        _history = fetchedList;
-        notifyListeners();
+        // Save to master list and apply any active filters
+        _allHistory = fetchedList;
+        applyFilters(date: activeFilterDate, type: activeFilterType);
 
-        print("DEBUG: Successfully fetched ${_history.length} records.");
+        print("DEBUG: Successfully fetched ${_allHistory.length} records.");
       } catch (e) {
         print("DEBUG: Error fetching scan history: $e");
       }
     });
+  }
+
+  // --- NEW: FILTER LOGIC ---
+  void applyFilters({DateTime? date, ScanType? type, bool clear = false}) {
+    if (clear) {
+      activeFilterDate = null;
+      activeFilterType = null;
+      _filteredHistory = List.from(_allHistory); // Reset to show all
+    } else {
+      activeFilterDate = date;
+      activeFilterType = type;
+
+      _filteredHistory = _allHistory.where((item) {
+        bool matchesDate = true;
+        bool matchesType = true;
+
+        // Check Date Match
+        if (activeFilterDate != null) {
+          matchesDate =
+              item.timestamp.year == activeFilterDate!.year &&
+              item.timestamp.month == activeFilterDate!.month &&
+              item.timestamp.day == activeFilterDate!.day;
+        }
+
+        // Check Type Match
+        if (activeFilterType != null) {
+          matchesType = item.type == activeFilterType;
+        }
+
+        return matchesDate && matchesType;
+      }).toList();
+    }
+
+    notifyListeners();
   }
 
   void openHistoryItem(BuildContext context, ScanHistoryItem item) {
@@ -105,7 +142,6 @@ class ScanHistoryViewModel extends BaseViewModel {
     final date = timestamp.toDate();
     final now = DateTime.now();
 
-    // Format Time (e.g., 8:05 PM)
     int hour = date.hour > 12
         ? date.hour - 12
         : (date.hour == 0 ? 12 : date.hour);
@@ -113,7 +149,6 @@ class ScanHistoryViewModel extends BaseViewModel {
     String minute = date.minute.toString().padLeft(2, '0');
     String timeStr = '$hour:$minute $period';
 
-    // Format Date (e.g., 24 Nov 2025)
     const months = [
       'Jan',
       'Feb',
@@ -130,7 +165,6 @@ class ScanHistoryViewModel extends BaseViewModel {
     ];
     String monthStr = months[date.month - 1];
 
-    // Check if it's Today or Yesterday
     if (date.year == now.year &&
         date.month == now.month &&
         date.day == now.day) {
@@ -144,7 +178,6 @@ class ScanHistoryViewModel extends BaseViewModel {
       return 'Yesterday · $timeStr';
     }
 
-    // Default formatting
     return '${date.day} $monthStr ${date.year} · $timeStr';
   }
 }

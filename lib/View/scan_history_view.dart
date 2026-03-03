@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../ViewModel/scan_history_view_model.dart';
+import '../scan_type.dart'; // Make sure this matches your project path
 
 class ScanHistoryView extends StatelessWidget {
   const ScanHistoryView({super.key});
@@ -79,22 +80,36 @@ class _ScanHistoryBody extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.filter_list_rounded,
-                        color: Colors.white,
-                        size: 20,
+
+                    // --- Filter Button ---
+                    GestureDetector(
+                      onTap: () => _showFilterBottomSheet(context, viewModel),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color:
+                              (viewModel.activeFilterDate != null ||
+                                  viewModel.activeFilterType != null)
+                              ? Colors
+                                    .white // Highlight if filters are active
+                              : Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.filter_list_rounded,
+                          color:
+                              (viewModel.activeFilterDate != null ||
+                                  viewModel.activeFilterType != null)
+                              ? colorScheme.primary
+                              : Colors.white,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-                // Stats row
+                // Stats row (Updates based on Filtered List)
                 Row(
                   children: [
                     _StatBadge(
@@ -121,11 +136,12 @@ class _ScanHistoryBody extends StatelessWidget {
               ],
             ),
           ),
+
           // --- Content ---
           Expanded(
             child: viewModel.hasHistory
                 ? ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
                     itemCount: viewModel.history.length,
                     itemBuilder: (context, index) {
                       final item = viewModel.history[index];
@@ -142,6 +158,214 @@ class _ScanHistoryBody extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // --- FILTER BOTTOM SHEET ---
+  void _showFilterBottomSheet(
+    BuildContext context,
+    ScanHistoryViewModel viewModel,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Temporary variables to hold selections before "Apply" is pressed
+    DateTime? tempDate = viewModel.activeFilterDate;
+    ScanType? tempType = viewModel.activeFilterType;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle Bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  const Text(
+                    'Filter History',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // --- Filter by Scan Type ---
+                  const Text(
+                    'Scan Type',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('All'),
+                        selected: tempType == null,
+                        onSelected: (selected) {
+                          if (selected) setState(() => tempType = null);
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('Breed'),
+                        selected: tempType == ScanType.breed,
+                        onSelected: (selected) {
+                          if (selected)
+                            setState(() => tempType = ScanType.breed);
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('Skin Disease'),
+                        selected: tempType == ScanType.skinDisease,
+                        onSelected: (selected) {
+                          if (selected)
+                            setState(() => tempType = ScanType.skinDisease);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // --- Filter by Date ---
+                  const Text(
+                    'Date',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: tempDate ?? DateTime.now(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() => tempDate = picked);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            tempDate != null
+                                ? '${tempDate!.day}/${tempDate!.month}/${tempDate!.year}'
+                                : 'Select Date',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: tempDate != null
+                                  ? Colors.black
+                                  : Colors.grey.shade500,
+                            ),
+                          ),
+                          Icon(
+                            Icons.calendar_month,
+                            color: colorScheme.primary,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  if (tempDate != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => setState(() => tempDate = null),
+                        child: const Text(
+                          'Clear Date',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 32),
+
+                  // --- Action Buttons ---
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            viewModel.applyFilters(clear: true);
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Reset'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            viewModel.applyFilters(
+                              date: tempDate,
+                              type: tempType,
+                            );
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Apply Filter'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -215,7 +439,7 @@ class _HistoryCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -256,13 +480,14 @@ class _HistoryCard extends StatelessWidget {
                   ? Icon(icon, color: Colors.white, size: 26)
                   : null,
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             // Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -282,19 +507,23 @@ class _HistoryCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const Spacer(),
-                      Icon(
-                        Icons.access_time,
-                        size: 12,
-                        color: Colors.grey.shade500,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        item.dateLabel,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade500,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            size: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            item.dateLabel,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -340,11 +569,11 @@ class _HistoryCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
             Icon(
               Icons.chevron_right_rounded,
               color: Colors.grey.shade400,
-              size: 24,
+              size: 20,
             ),
           ],
         ),
@@ -388,7 +617,7 @@ class _EmptyHistoryView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             const Text(
-              'No scans yet',
+              'No matching scans',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -397,7 +626,7 @@ class _EmptyHistoryView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your scan history will appear here after\nyou analyze your pet\'s skin or breed.',
+              'Try changing your filters or start a new scan.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,

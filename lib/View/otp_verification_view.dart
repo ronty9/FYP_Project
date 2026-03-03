@@ -102,16 +102,22 @@ class _OtpVerificationContent extends StatelessWidget {
 
                 const SizedBox(height: 40),
 
-                // OTP Input Fields
+                // OTP Input Fields (COMPLETELY REBUILT FOR RESPONSIVENESS)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
                     6,
-                    (index) => _OtpInputField(
-                      controller: viewModel.otpControllers[index],
-                      focusNode: viewModel.otpFocusNodes[index],
-                      onChanged: (value) =>
-                          viewModel.onOtpChanged(value, index),
+                    (index) => Expanded(
+                      // This guarantees it auto-scales to ANY screen width
+                      child: Padding(
+                        // Adds spacing between boxes, except for the very last one
+                        padding: EdgeInsets.only(right: index == 5 ? 0 : 8.0),
+                        child: _OtpInputField(
+                          controller: viewModel.otpControllers[index],
+                          focusNode: viewModel.otpFocusNodes[index],
+                          onChanged: (value) =>
+                              viewModel.onOtpChanged(value, index),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -206,7 +212,7 @@ class _OtpVerificationContent extends StatelessWidget {
                             ),
                           )
                         : const Text(
-                            'Verify',
+                            'Verify Code',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -270,7 +276,8 @@ class _OtpVerificationContent extends StatelessWidget {
   }
 }
 
-class _OtpInputField extends StatelessWidget {
+// Custom Stateful Widget to handle the box design without using InputDecoration
+class _OtpInputField extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final Function(String) onChanged;
@@ -282,44 +289,64 @@ class _OtpInputField extends StatelessWidget {
   });
 
   @override
+  State<_OtpInputField> createState() => _OtpInputFieldState();
+}
+
+class _OtpInputFieldState extends State<_OtpInputField> {
+  @override
+  void initState() {
+    super.initState();
+    // Listen for focus changes so the box border turns blue when tapped
+    widget.focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    setState(() {}); // Trigger a rebuild to update the border color
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final hasFocus = widget.focusNode.hasFocus;
 
     return Container(
-      width: 50,
       height: 60,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        // Draw the border manually!
+        border: Border.all(
+          color: hasFocus ? colorScheme.primary : Colors.grey.shade300,
+          width: hasFocus ? 2 : 1,
+        ),
+      ),
       child: TextField(
-        controller: controller,
-        focusNode: focusNode,
+        controller: widget.controller,
+        focusNode: widget.focusNode,
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
         style: TextStyle(
-          fontSize: 24,
+          fontSize: 22,
           fontWeight: FontWeight.bold,
           color: colorScheme.onSurface,
         ),
-        decoration: InputDecoration(
+        // The magic trick: Strip the TextField of ALL its default styling!
+        decoration: const InputDecoration(
+          border: InputBorder.none,
           counterText: '',
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: colorScheme.primary, width: 2),
-          ),
+          isDense: true,
           contentPadding: EdgeInsets.zero,
         ),
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        onChanged: onChanged,
+        onChanged: widget.onChanged,
       ),
     );
   }
