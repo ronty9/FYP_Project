@@ -107,7 +107,7 @@ class _ForgotPasswordOtpContent extends StatelessWidget {
                     6,
                     (index) => Expanded(
                       child: Padding(
-                        padding: EdgeInsets.only(right: index == 5 ? 0 : 8.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: _OtpInputField(
                           controller: viewModel.otpControllers[index],
                           focusNode: viewModel.otpFocusNodes[index],
