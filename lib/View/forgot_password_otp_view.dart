@@ -338,19 +338,9 @@ class _OtpInputFieldState extends State<_OtpInputField> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final hasFocus = widget.focusNode.hasFocus;
 
-    return Container(
+    return SizedBox(
       height: 56,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: hasFocus ? colorScheme.primary : Colors.grey.shade300,
-          width: hasFocus ? 2 : 1.5,
-        ),
-      ),
       child: TextField(
         controller: widget.controller,
         focusNode: widget.focusNode,
@@ -363,11 +353,24 @@ class _OtpInputFieldState extends State<_OtpInputField> {
           color: colorScheme.primary,
         ),
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: const InputDecoration(
-          border: InputBorder.none,
+        decoration: InputDecoration(
           counterText: '',
+          filled: true,
+          fillColor: Colors.white,
           isDense: true,
-          contentPadding: EdgeInsets.zero,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: colorScheme.primary, width: 2),
+          ),
         ),
         onChanged: widget.onChanged,
       ),
