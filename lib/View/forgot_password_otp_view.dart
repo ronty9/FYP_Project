@@ -101,16 +101,20 @@ class _ForgotPasswordOtpContent extends StatelessWidget {
 
                 const SizedBox(height: 40),
 
-                // OTP Input Fields
+                // OTP Input Fields (responsive layout)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
                     6,
-                    (index) => _OtpInputField(
-                      controller: viewModel.otpControllers[index],
-                      focusNode: viewModel.otpFocusNodes[index],
-                      onChanged: (value) =>
-                          viewModel.onOtpChanged(value, index),
+                    (index) => Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(right: index == 5 ? 0 : 8.0),
+                        child: _OtpInputField(
+                          controller: viewModel.otpControllers[index],
+                          focusNode: viewModel.otpFocusNodes[index],
+                          onChanged: (value) =>
+                              viewModel.onOtpChanged(value, index),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -299,7 +303,7 @@ class _ForgotPasswordOtpContent extends StatelessWidget {
   }
 }
 
-class _OtpInputField extends StatelessWidget {
+class _OtpInputField extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final Function(String) onChanged;
@@ -311,17 +315,45 @@ class _OtpInputField extends StatelessWidget {
   });
 
   @override
+  State<_OtpInputField> createState() => _OtpInputFieldState();
+}
+
+class _OtpInputFieldState extends State<_OtpInputField> {
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final hasFocus = widget.focusNode.hasFocus;
 
     return Container(
-      width: 48,
       height: 56,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasFocus ? colorScheme.primary : Colors.grey.shade300,
+          width: hasFocus ? 2 : 1.5,
+        ),
+      ),
       child: TextField(
-        controller: controller,
-        focusNode: focusNode,
+        controller: widget.controller,
+        focusNode: widget.focusNode,
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
@@ -331,25 +363,13 @@ class _OtpInputField extends StatelessWidget {
           color: colorScheme.primary,
         ),
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
+          border: InputBorder.none,
           counterText: '',
-          filled: true,
-          fillColor: Colors.white,
+          isDense: true,
           contentPadding: EdgeInsets.zero,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: colorScheme.primary, width: 2),
-          ),
         ),
-        onChanged: onChanged,
+        onChanged: widget.onChanged,
       ),
     );
   }
