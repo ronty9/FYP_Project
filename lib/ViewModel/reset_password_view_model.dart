@@ -1,9 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-
-import '../services/ai_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class ResetPasswordViewModel extends ChangeNotifier {
   final TextEditingController newPasswordController = TextEditingController();
@@ -58,40 +54,41 @@ class ResetPasswordViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final uri = Uri.parse('${AiService.baseUrl}/reset-password');
-      final response = await http
-          .post(
-            uri,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'email': _email,
-              'new_password': newPasswordController.text,
-            }),
-          )
-          .timeout(const Duration(seconds: 20));
+      // Call the Firebase Cloud Function instead of the local backend
+      final callable = FirebaseFunctions.instanceFor(region: 'asia-southeast1')
+          .httpsCallable('resetPassword');
+
+      await callable.call<dynamic>({
+        'email': _email,
+        'newPassword': newPasswordController.text,
+      });
 
       isLoading = false;
+      notifyListeners();
 
-      if (response.statusCode == 200) {
-        notifyListeners();
-        if (context.mounted) {
-          _showSuccessDialog(context);
-        }
-      } else {
-        // Try to extract a readable error from the response body
-        String detail = 'Failed to reset password.';
-        try {
-          final body = jsonDecode(response.body) as Map<String, dynamic>;
-          detail = body['detail']?.toString() ?? detail;
-        } catch (_) {}
-        errorMessage = detail;
-        notifyListeners();
+      if (context.mounted) {
+        _showSuccessDialog(context);
       }
+    } on FirebaseFunctionsException catch (e) {
+      isLoading = false;
+
+      // Map Cloud Function error codes to user-friendly messages
+      switch (e.code) {
+        case 'not-found':
+          errorMessage = 'No account found with this email.';
+          break;
+        case 'invalid-argument':
+          errorMessage = e.message ?? 'Invalid input. Please check your data.';
+          break;
+        default:
+          errorMessage = e.message ?? 'Failed to reset password.';
+      }
+
+      notifyListeners();
     } catch (e) {
       isLoading = false;
-      errorMessage =
-          'Could not reach server. Make sure you are on the same '
-          'network as the backend.';
+      errorMessage = 'Could not reach the server. Please check your internet '
+          'connection and try again.';
       notifyListeners();
     }
   }

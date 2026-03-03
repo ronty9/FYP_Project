@@ -13,6 +13,8 @@ import 'package:fyp_project/models/scan_prediction.dart';
 import 'package:fyp_project/models/pet_info.dart';
 import 'package:fyp_project/models/breed_option.dart';
 import 'package:fyp_project/calendar_event.dart';
+import 'package:fyp_project/models/feedback_model.dart';
+import 'package:fyp_project/scan_type.dart';
 
 // ─── Custom Summary Reporter ────────────────────────────────────────
 /// Tracks every test result so we can print a table at the end.
@@ -397,6 +399,189 @@ void main() {
       expect(e.isCompleted, false);
       expect(e.scheduleType, ScheduleType.other);
       expect(e.scheduleId, isNull);
+    });
+
+    trackedTest('TC-45', 'CalendarEvent', 'All optional fields populated', () {
+      final start = DateTime(2026, 3, 10, 14, 0);
+      final end = DateTime(2026, 3, 10, 15, 0);
+      final reminderDt = DateTime(2026, 3, 10, 13, 0);
+      final e = CalendarEvent(
+        day: 10,
+        petName: 'Buddy',
+        activity: 'Vaccination',
+        location: 'Vet Clinic',
+        time: '2:00 PM',
+        scheduleId: 'sch-001',
+        startDateTime: start,
+        endDateTime: end,
+        reminderEnabled: true,
+        reminderDateTime: reminderDt,
+        reminderDuration: ReminderDuration.oneHour,
+        petId: 'pet-001',
+        isCompleted: true,
+        scheduleType: ScheduleType.vaccination,
+      );
+      expect(e.reminderEnabled, true);
+      expect(e.isCompleted, true);
+      expect(e.scheduleId, 'sch-001');
+      expect(e.petId, 'pet-001');
+      expect(e.scheduleType, ScheduleType.vaccination);
+      expect(e.startDateTime, start);
+      expect(e.endDateTime, end);
+      expect(e.reminderDateTime, reminderDt);
+      expect(e.reminderDuration, ReminderDuration.oneHour);
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // 13. MODEL: FeedbackModel
+  // ──────────────────────────────────────────────────────────────────
+  group('Model — FeedbackModel', () {
+    trackedTest('TC-46', 'FeedbackModel', 'Constructor & required fields', () {
+      final fb = FeedbackModel(
+        id: 'fb1',
+        userId: 'u1',
+        userEmail: 'user@mail.com',
+        category: 'Bug',
+        title: 'App crash',
+        message: 'Crashes on scan page',
+        rating: 4,
+        status: 'Pending',
+        createdAt: DateTime(2026, 3, 1),
+      );
+      expect(fb.id, 'fb1');
+      expect(fb.userId, 'u1');
+      expect(fb.userEmail, 'user@mail.com');
+      expect(fb.category, 'Bug');
+      expect(fb.title, 'App crash');
+      expect(fb.rating, 4);
+      expect(fb.status, 'Pending');
+    });
+
+    trackedTest('TC-47', 'FeedbackModel', 'Optional reply fields null', () {
+      final fb = FeedbackModel(
+        id: 'fb2',
+        userId: 'u2',
+        userEmail: 'admin@mail.com',
+        category: 'Feature',
+        title: 'Dark mode',
+        message: 'Please add dark mode',
+        rating: 5,
+        status: 'Pending',
+        createdAt: DateTime(2026, 3, 2),
+      );
+      expect(fb.messageReply, isNull);
+      expect(fb.replyBy, isNull);
+      expect(fb.replyAt, isNull);
+    });
+
+    trackedTest('TC-48', 'FeedbackModel', 'With admin reply fields', () {
+      final fb = FeedbackModel(
+        id: 'fb3',
+        userId: 'u3',
+        userEmail: 'user3@mail.com',
+        category: 'Bug',
+        title: 'Login issue',
+        message: 'Cannot login',
+        rating: 2,
+        status: 'Resolved',
+        createdAt: DateTime(2026, 2, 28),
+        messageReply: 'Fixed in v2.1',
+        replyBy: 'admin@petscan.com',
+        replyAt: DateTime(2026, 3, 1),
+      );
+      expect(fb.messageReply, 'Fixed in v2.1');
+      expect(fb.replyBy, 'admin@petscan.com');
+      expect(fb.replyAt, DateTime(2026, 3, 1));
+      expect(fb.status, 'Resolved');
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // 14. MODEL: ScanType
+  // ──────────────────────────────────────────────────────────────────
+  group('Model — ScanType', () {
+    trackedTest('TC-49', 'ScanType', 'Enum has expected values', () {
+      expect(ScanType.values.length, 2);
+      expect(ScanType.values.contains(ScanType.skinDisease), true);
+      expect(ScanType.values.contains(ScanType.breed), true);
+    });
+
+    trackedTest('TC-50', 'ScanType', 'Enum name strings', () {
+      expect(ScanType.skinDisease.name, 'skinDisease');
+      expect(ScanType.breed.name, 'breed');
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // 15. EDGE CASES — Authentication
+  // ──────────────────────────────────────────────────────────────────
+  group('Edge Cases — Authentication', () {
+    trackedTest('TC-51', 'Auth-Edge', 'Accept email with + tag', () {
+      expect(ValidationUtils.isValidEmail('user+tag@mail.com'), true);
+    });
+
+    trackedTest('TC-52', 'Auth-Edge', 'Reject email missing @ symbol', () {
+      expect(ValidationUtils.isValidEmail('usermail.com'), false);
+    });
+
+    trackedTest('TC-53', 'Auth-Edge', 'Reject registration all empty', () {
+      expect(ValidationUtils.isValidRegistration('', '', ''), false);
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // 16. EDGE CASES — Pet Management
+  // ──────────────────────────────────────────────────────────────────
+  group('Edge Cases — Pet Management', () {
+    trackedTest('TC-54', 'Pet-Edge', 'Accept very large weight', () {
+      expect(ValidationUtils.isValidPetWeight(9999.9), true);
+    });
+
+    trackedTest('TC-55', 'Pet-Edge', 'Age when DOB is today = 0D', () {
+      final today = DateTime(2026, 3, 3);
+      expect(ValidationUtils.calculateAge(today, today), '0D');
+    });
+
+    trackedTest('TC-56', 'Pet-Edge', 'Reject all-empty pet details', () {
+      expect(ValidationUtils.isValidPetDetails('', '', '', ''), false);
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // 17. EDGE CASES — AI Scanner
+  // ──────────────────────────────────────────────────────────────────
+  group('Edge Cases — AI Scanner', () {
+    trackedTest('TC-57', 'AI-Edge', 'Accept confidence above 1.0', () {
+      // Values >1.0 should still pass the >=0.50 check
+      expect(ValidationUtils.isAcceptableConfidence(1.5), true);
+    });
+
+    trackedTest('TC-58', 'AI-Edge', 'Reject negative confidence', () {
+      expect(ValidationUtils.isAcceptableConfidence(-0.1), false);
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // 18. EDGE CASES — Admin Dashboard
+  // ──────────────────────────────────────────────────────────────────
+  group('Edge Cases — Admin Dashboard', () {
+    trackedTest('TC-59', 'Admin-Edge', 'Same timestamp → Just now', () {
+      final now = DateTime(2026, 3, 3, 12, 0);
+      expect(ValidationUtils.formatActivityTime(now, now), 'Just now');
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // 19. EDGE CASES — UserAccount
+  // ──────────────────────────────────────────────────────────────────
+  group('Edge Cases — UserAccount', () {
+    trackedTest('TC-60', 'UserAccount', 'fromMap with partial data', () {
+      final u = UserAccount.fromMap('id2', {'userName': 'Siti'});
+      expect(u.name, 'Siti');
+      expect(u.email, '');         // default
+      expect(u.status, 'Active');  // default
+      expect(u.petsCount, 0);     // default
     });
   });
 }
