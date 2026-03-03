@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart'; // REQUIRED
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../View/home_view.dart';
 import '../View/register_view.dart';
@@ -135,11 +134,8 @@ class LoginViewModel extends ChangeNotifier {
     }
   }
 
-  // --- SOCIAL SIGN-IN LOGIC (Google & Facebook) ---
-  Future<void> onProviderPressed(
-    BuildContext context,
-    String providerName,
-  ) async {
+  // --- GOOGLE SIGN-IN LOGIC ---
+  Future<void> onGoogleLoginPressed(BuildContext context) async {
     // Terms Check for Social Login
     if (!_isTermsAccepted) {
       setMessage('Please accept the Terms & Conditions.', MessageType.error);
@@ -150,68 +146,28 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      UserCredential? userCredential;
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-      if (providerName == 'Google') {
-        // --- GOOGLE LOGIN ---
-        final GoogleSignIn googleSignIn = GoogleSignIn();
-        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-
-        if (googleUser == null) {
-          _isLoading = false;
-          notifyListeners();
-          return; // User cancelled
-        }
-
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-
-        userCredential = await FirebaseAuth.instance.signInWithCredential(
-          credential,
-        );
-      } else if (providerName == 'Facebook') {
-        // --- FACEBOOK LOGIN ---
-        final LoginResult result = await FacebookAuth.instance.login();
-
-        if (result.status == LoginStatus.success) {
-          final AccessToken accessToken = result.accessToken!;
-          final OAuthCredential credential = FacebookAuthProvider.credential(
-            accessToken.token,
-          );
-
-          userCredential = await FirebaseAuth.instance.signInWithCredential(
-            credential,
-          );
-        } else if (result.status == LoginStatus.cancelled) {
-          _isLoading = false;
-          notifyListeners();
-          return; // User cancelled
-        } else {
-          throw FirebaseAuthException(
-            code: 'facebook-login-failed',
-            message: result.message,
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$providerName sign-in coming soon.')),
-        );
+      if (googleUser == null) {
         _isLoading = false;
         notifyListeners();
-        return;
+        return; // User cancelled
       }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithCredential(credential);
 
       // --- SAVE TO FIRESTORE & NAVIGATE ---
       if (userCredential.user != null) {
-        // Pass the provider name so the DB saves "google" or "facebook" correctly
-        await _saveSocialUserToFirestore(
-          userCredential.user!,
-          providerName.toLowerCase(),
-        );
+        await _saveSocialUserToFirestore(userCredential.user!, 'google');
 
         _isLoading = false;
         notifyListeners();
@@ -225,10 +181,7 @@ class LoginViewModel extends ChangeNotifier {
       }
     } on FirebaseAuthException catch (e) {
       _isLoading = false;
-      setMessage(
-        e.message ?? '$providerName Sign-In failed',
-        MessageType.error,
-      );
+      setMessage(e.message ?? 'Google Sign-In failed', MessageType.error);
     } catch (e) {
       _isLoading = false;
       setMessage('An error occurred: $e', MessageType.error);
@@ -269,10 +222,10 @@ class LoginViewModel extends ChangeNotifier {
       final userDocRef = firestore.collection('user').doc(customUserId);
 
       final userData = {
-        'userName': user.displayName ?? '$providerName User',
+        'userName': user.displayName ?? 'Google User',
         'userEmail': user.email ?? '',
-        'password_hash': '${providerName.toUpperCase()}_AUTH',
-        'authProvider': providerName, // Saves 'google' or 'facebook'
+        'password_hash': 'GOOGLE_AUTH',
+        'authProvider': providerName,
         'providerId': user.uid,
         'userRole': 'User',
         'accountStatus': 'Active',

@@ -50,6 +50,20 @@ class ForgotPasswordViewModel extends ChangeNotifier {
       }
 
       final userData = userQuery.docs.first.data();
+
+      // --- NEW: Check if the user uses Google Login ---
+      final authProvider = userData['authProvider'] as String?;
+      final passwordHash = userData['password_hash'] as String?;
+
+      if (authProvider == 'google' || passwordHash == 'GOOGLE_AUTH') {
+        errorMessage =
+            'This email is linked to a Google account. Please use "Continue with Google" to log in.';
+        isLoading = false;
+        notifyListeners();
+        return; // Abort sending the OTP
+      }
+      // ------------------------------------------------
+
       final userName = userData['userName'] ?? 'User';
 
       // 5. Send OTP via Email

@@ -103,7 +103,7 @@ class _PrivacySecurityBody extends StatelessWidget {
             const SizedBox(height: 24),
 
             // --- Security Section ---
-            _SectionHeader(title: 'Security', icon: Icons.lock_outline),
+            const _SectionHeader(title: 'Security', icon: Icons.lock_outline),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
@@ -124,7 +124,12 @@ class _PrivacySecurityBody extends StatelessWidget {
                     iconColor: Colors.orange,
                     iconBgColor: const Color(0xFFFFF3E0),
                     title: 'Change Password',
-                    subtitle: 'Update your current password',
+                    // Update subtitle dynamically based on login method
+                    subtitle: viewModel.isGoogleSignIn
+                        ? 'Managed via Google Account'
+                        : 'Update your current password',
+                    isEnabled:
+                        !viewModel.isGoogleSignIn, // Pass the boolean flag
                     onTap: () => viewModel.onChangePasswordPressed(context),
                     showDivider: true,
                   ),
@@ -134,7 +139,7 @@ class _PrivacySecurityBody extends StatelessWidget {
             const SizedBox(height: 24),
 
             // --- Data & Privacy Section ---
-            _SectionHeader(
+            const _SectionHeader(
               title: 'Data & Privacy',
               icon: Icons.privacy_tip_outlined,
             ),
@@ -162,7 +167,6 @@ class _PrivacySecurityBody extends StatelessWidget {
                     onTap: () => viewModel.openPrivacyPolicy(context),
                     showDivider: true,
                   ),
-                  // Delete Account removed: account deletion is handled via support
                 ],
               ),
             ),
@@ -237,6 +241,8 @@ class _SettingsTile extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
   final bool showDivider;
+  final bool isEnabled; // Added to manage visual disabled state
+
   const _SettingsTile({
     required this.icon,
     required this.iconColor,
@@ -245,75 +251,81 @@ class _SettingsTile extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
     this.showDivider = false,
+    this.isEnabled = true, // Defaults to true
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: showDivider
-                ? const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  )
-                : const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: iconBgColor,
-                      borderRadius: BorderRadius.circular(12),
+    // Opacity wraps the tile to visually show it's disabled if isEnabled is false
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.5,
+      child: Column(
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap:
+                  onTap, // We still allow onTap so the snackbar message can show
+              borderRadius: showDivider
+                  ? const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    )
+                  : const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
                     ),
-                    child: Icon(icon, color: iconColor, size: 22),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF2D3142),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ],
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: iconBgColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(icon, color: iconColor, size: 22),
                     ),
-                  ),
-                  Icon(Icons.chevron_right, color: Colors.grey.shade400),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF2D3142),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: Colors.grey.shade400),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        if (showDivider)
-          Divider(
-            height: 1,
-            indent: 64,
-            endIndent: 16,
-            color: Colors.grey.shade100,
-          ),
-      ],
+          if (showDivider)
+            Divider(
+              height: 1,
+              indent: 64,
+              endIndent: 16,
+              color: Colors.grey.shade100,
+            ),
+        ],
+      ),
     );
   }
 }

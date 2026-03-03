@@ -145,7 +145,7 @@ class _LoginContentState extends State<_LoginContent> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: SizedBox(
-          height: 300, // Limit height to make it scrollable
+          height: 300,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +280,7 @@ class _LoginContentState extends State<_LoginContent> {
                           ),
                           const SizedBox(height: 24),
 
-                          // --- UPDATED: Email OR Username Input ---
+                          // Email OR Username Input
                           TextField(
                             controller: viewModel.emailOrUsernameController,
                             keyboardType: TextInputType.emailAddress,
@@ -368,7 +368,7 @@ class _LoginContentState extends State<_LoginContent> {
                             viewModel,
                           ),
 
-                          // Login Button
+                          // --- Login Button ---
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -437,7 +437,7 @@ class _LoginContentState extends State<_LoginContent> {
                                   horizontal: 12.0,
                                 ),
                                 child: Text(
-                                  'or continue with',
+                                  'or',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: colorScheme.onSurface.withValues(
@@ -453,41 +453,41 @@ class _LoginContentState extends State<_LoginContent> {
                           ),
                           const SizedBox(height: 24),
 
-                          // Social Buttons
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _SocialCircleButton(
-                                tooltip: 'Continue with Facebook',
-                                icon: Icons.facebook,
-                                iconColor: const Color(0xFF1877F2),
-                                onTap: () => viewModel.onProviderPressed(
-                                  context,
-                                  'Facebook',
+                          // --- REDESIGNED GOOGLE BUTTON ---
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black87,
+                                side: BorderSide(color: Colors.grey.shade300),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              icon: Image.asset(
+                                'images/assets/google_logo.png',
+                                height: 24,
+                                width: 24,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(
+                                      Icons.g_mobiledata,
+                                      color: Colors.blue,
+                                      size: 28,
+                                    ),
+                              ),
+                              label: const Text(
+                                'Continue with Google',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(width: 20),
-                              _SocialCircleButton(
-                                tooltip: 'Continue with Google',
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'images/assets/google_logo.png',
-                                    fit: BoxFit.contain,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(
-                                              Icons.broken_image,
-                                              color: Colors.red,
-                                            ),
-                                  ),
-                                ),
-                                onTap: () => viewModel.onProviderPressed(
-                                  context,
-                                  'Google',
-                                ),
-                              ),
-                            ],
+                              onPressed: () =>
+                                  viewModel.onGoogleLoginPressed(context),
+                            ),
                           ),
                           const SizedBox(height: 32),
 
@@ -575,53 +575,6 @@ class _LoginContentState extends State<_LoginContent> {
         borderSide: BorderSide(color: colorScheme.primary, width: 2),
       ),
       suffixIcon: suffixIcon,
-    );
-  }
-}
-
-class _SocialCircleButton extends StatelessWidget {
-  final Widget? child;
-  final IconData? icon;
-  final Color? iconColor;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _SocialCircleButton({
-    this.child,
-    this.icon,
-    this.iconColor,
-    required this.tooltip,
-    required this.onTap,
-  }) : assert(child != null || icon != null);
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.grey.shade300),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Center(
-            child:
-                child ?? Icon(icon, color: iconColor ?? Colors.black, size: 26),
-          ),
-        ),
-      ),
     );
   }
 }
