@@ -28,20 +28,18 @@ _firebase_admin_ready = False
 try:
     import firebase_admin
     from firebase_admin import auth as firebase_auth_admin
-    from firebase_admin import credentials
 
-    _SA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "serviceAccount.json")
-    if os.path.exists(_SA_PATH):
-        _cred = credentials.Certificate(_SA_PATH)
-        firebase_admin.initialize_app(_cred)
-        _firebase_admin_ready = True
-        print("  Firebase Admin SDK initialised via serviceAccount.json")
-    else:
-        print("  WARNING: backend/serviceAccount.json not found. "
-              "/reset-password endpoint will be unavailable. "
-              "Download it from Firebase Console → Project Settings → Service Accounts.")
+    # Uses Application Default Credentials (ADC):
+    #   • Cloud Run   → automatic via the default service account
+    #   • Local dev   → run: gcloud auth application-default login
+    firebase_admin.initialize_app()
+    _firebase_admin_ready = True
+    print("  Firebase Admin SDK initialised via Application Default Credentials")
 except ImportError:
     print("  WARNING: firebase-admin not installed. Run: pip install firebase-admin")
+except Exception as e:
+    print(f"  WARNING: Could not initialise Firebase Admin SDK: {e}. "
+          "/reset-password endpoint will be unavailable.")
 
 # Lazy-import TensorFlow so startup errors are easier to diagnose
 try:

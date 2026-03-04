@@ -1,18 +1,12 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../config/api_keys.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
-/// Service for handling OTP generation, verification, and email sending via SendGrid
+/// Service for handling OTP generation, verification, and email sending
+/// via a Firebase Cloud Function (which uses SendGrid server-side).
 class OtpService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // SendGrid configuration from separate config file
-  static String get _sendGridApiKey => ApiKeys.sendGridApiKey;
-  static String get _senderEmail => ApiKeys.senderEmail;
-  static String get _senderName => ApiKeys.senderName;
 
   /// Generates a 6-digit OTP code
   String _generateOTP() {
@@ -40,11 +34,11 @@ class OtpService {
         'attempts': 0,
       });
 
-      // 3. Send email via SendGrid
-      final emailSent = await _sendEmailViaSendGrid(email, userName, otp);
+      // 3. Send email via Cloud Function (SendGrid is handled server-side)
+      final emailSent = await _sendEmailViaCloudFunction(email, userName, otp);
 
       if (!emailSent) {
-        debugPrint('Failed to send OTP email via SendGrid');
+        debugPrint('Failed to send OTP email via Cloud Function');
         return null;
       }
 
@@ -55,139 +49,34 @@ class OtpService {
     }
   }
 
-  /// Sends email via SendGrid API
-  Future<bool> _sendEmailViaSendGrid(
+  /// Sends email via the sendOtp Firebase Cloud Function.
+  /// The Cloud Function handles SendGrid integration server-side,
+  /// so no API keys are needed in the client code.
+  Future<bool> _sendEmailViaCloudFunction(
     String toEmail,
     String userName,
     String otp,
   ) async {
-    if (_sendGridApiKey == 'YOUR_SENDGRID_API_KEY_HERE') {
-      debugPrint('⚠️ WARNING: SendGrid API key not configured!');
-      debugPrint('OTP Code (for testing): $otp');
-      // For development, return true to allow testing without SendGrid
-      return true;
-    }
-
     try {
-      final response = await http.post(
-        Uri.parse('https://api.sendgrid.com/v3/mail/send'),
-        headers: {
-          'Authorization': 'Bearer $_sendGridApiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'personalizations': [
-            {
-              'to': [
-                {'email': toEmail},
-              ],
-              'subject': 'Your PawScope Verification Code',
-            },
-          ],
-          'from': {'email': _senderEmail, 'name': _senderName},
+      final callable = FirebaseFunctions.instanceFor(
+        region: 'asia-southeast1',
+      ).httpsCallable('sendOtp');
 
-          'content': [
-            {'type': 'text/html', 'value': _buildEmailHTML(userName, otp)},
-          ],
-        }),
-      );
+      await callable.call<dynamic>({
+        'email': toEmail,
+        'userName': userName,
+        'otp': otp,
+      });
 
-      if (response.statusCode == 202) {
-        debugPrint('✅ Email sent successfully to $toEmail');
-        return true;
-      } else {
-        debugPrint(
-          '❌ SendGrid error: ${response.statusCode} - ${response.body}',
-        );
-        return false;
-      }
+      debugPrint('✅ OTP email sent successfully to $toEmail');
+      return true;
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('❌ Cloud Function error: ${e.code} - ${e.message}');
+      return false;
     } catch (e) {
-      debugPrint('❌ Error calling SendGrid API: $e');
+      debugPrint('❌ Error calling sendOtp Cloud Function: $e');
       return false;
     }
-  }
-
-  /// Builds the HTML email template
-  String _buildEmailHTML(String userName, String otp) {
-    return '''
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: #ffffff;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 30px;
-      text-align: center;
-    }
-    .content {
-      padding: 40px 30px;
-      text-align: center;
-    }
-    .otp-code {
-      font-size: 36px;
-      font-weight: bold;
-      color: #667eea;
-      letter-spacing: 8px;
-      margin: 30px 0;
-      padding: 20px;
-      background-color: #f8f9ff;
-      border-radius: 8px;
-      display: inline-block;
-    }
-    .info {
-      color: #666;
-      font-size: 14px;
-      margin-top: 20px;
-    }
-    .footer {
-      background-color: #f8f9fa;
-      padding: 20px;
-      text-align: center;
-      color: #888;
-      font-size: 12px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🐾 PawScope</h1>
-      <p>Email Verification</p>
-    </div>
-    <div class="content">
-      <h2>Hello ${userName.isNotEmpty ? userName : 'there'}!</h2>
-      <p>Thank you for registering with PawScope. Please use the verification code below to complete your registration:</p>
-      
-      <div class="otp-code">$otp</div>
-      
-      <div class="info">
-        <p><strong>This code will expire in 10 minutes.</strong></p>
-        <p>If you didn't request this code, please ignore this email.</p>
-      </div>
-    </div>
-    <div class="footer">
-      <p>© 2026 PawScope. All rights reserved.</p>
-      <p>This is an automated email, please do not reply.</p>
-    </div>
-  </div>
-</body>
-</html>
-    ''';
   }
 
   /// Verifies the OTP code entered by the user

@@ -23,7 +23,6 @@ COPY models/ ./models/
 
 # 3. Copy the backend source code
 COPY main.py .
-COPY serviceAccount.json .
 
 # 4. Cloud Run sets the PORT env variable (default 8080)
 ENV PORT=8080
