@@ -2,6 +2,4 @@
 
 <resources>
     <string name="app_name">PawScope</string>
-    <string name="facebook_app_id">1571353214186028</string>
-    <string name="facebook_client_token">9a962c94cd6bb29013809cf49d69c294</string>
 </resources>

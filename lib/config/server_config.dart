@@ -17,7 +17,16 @@ class ServerConfig {
   static const String _defaultIos = 'http://127.0.0.1:8000';
   static const String _defaultAndroid = 'http://10.0.2.2:8000';
 
+  // Ensure production builds use an HTTPS URL. Replace with real Cloud Run URL later.
+  static const String _defaultProduction =
+      'https://PLACEHOLDER-FOR-YOUR-CLOUD-RUN-URL.run.app';
+
   static String get defaultUrl {
+    const isProduction = bool.fromEnvironment('dart.vm.product');
+    if (isProduction) {
+      return _defaultProduction;
+    }
+
     // ignore: do_not_use_environment
     const isAndroid =
         bool.fromEnvironment('dart.library.io') &&

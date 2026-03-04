@@ -50,7 +50,8 @@ class AiService {
   //   Physical device   → http://<your-local-ip>:8000
   //
   // After deploying to Cloud Run, replace the URL below with your Cloud Run URL.
-  static String baseUrl = 'https://petscan-ai-756171113352.asia-southeast1.run.app';
+  static String baseUrl =
+      'https://petscan-ai-756171113352.asia-southeast1.run.app';
 
   /// Send [imageFile] to the backend and return species + breed predictions.
   ///
@@ -78,17 +79,13 @@ class AiService {
       streamedResponse = await request.send().timeout(
         const Duration(seconds: 60),
       );
-    } on SocketException catch (e) {
+    } on SocketException {
       throw Exception(
         'Cannot reach the AI server at $baseUrl. '
-        'Make sure your phone and computer are on the same Wi-Fi network. '
-        'Details: $e',
+        'Make sure your phone and computer are on the same Wi-Fi network.',
       );
-    } on http.ClientException catch (e) {
-      throw Exception(
-        'Network error while contacting the AI server. '
-        'Details: $e',
-      );
+    } on http.ClientException {
+      throw Exception('Network error while contacting the AI server.');
     }
     final body = await streamedResponse.stream.bytesToString();
 
@@ -140,17 +137,13 @@ class AiService {
       streamedResponse = await request.send().timeout(
         const Duration(seconds: 60),
       );
-    } on SocketException catch (e) {
+    } on SocketException {
       throw Exception(
         'Cannot reach the AI server at $baseUrl. '
-        'Make sure your phone and computer are on the same Wi-Fi network. '
-        'Details: \$e',
+        'Make sure your phone and computer are on the same Wi-Fi network.',
       );
-    } on http.ClientException catch (e) {
-      throw Exception(
-        'Network error while contacting the AI server. '
-        'Details: \$e',
-      );
+    } on http.ClientException {
+      throw Exception('Network error while contacting the AI server.');
     }
     final body = await streamedResponse.stream.bytesToString();
 

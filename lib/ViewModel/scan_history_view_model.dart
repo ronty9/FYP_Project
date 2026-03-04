@@ -48,7 +48,7 @@ class ScanHistoryViewModel extends BaseViewModel {
     runAsync(() async {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        print("DEBUG: No user is currently logged in!");
+        debugPrint("DEBUG: No user is currently logged in!");
         return;
       }
 
@@ -87,9 +87,11 @@ class ScanHistoryViewModel extends BaseViewModel {
         _allHistory = fetchedList;
         applyFilters(date: activeFilterDate, type: activeFilterType);
 
-        print("DEBUG: Successfully fetched ${_allHistory.length} records.");
+        debugPrint(
+          "DEBUG: Successfully fetched ${_allHistory.length} records.",
+        );
       } catch (e) {
-        print("DEBUG: Error fetching scan history: $e");
+        debugPrint("DEBUG: Error fetching scan history: $e");
       }
     });
   }

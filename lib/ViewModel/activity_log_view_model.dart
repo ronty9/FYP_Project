@@ -27,7 +27,7 @@ class ActivityLogViewModel extends BaseViewModel {
           }
           // Otherwise, filter locally in Dart to avoid Firebase Index errors!
           return snapshot.docs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
+            final data = doc.data();
             final type = data['type']?.toString() ?? 'INFO';
             return type == _selectedFilter;
           }).toList();

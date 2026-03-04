@@ -8,9 +8,9 @@ service firebase.storage {
     }
 
     // 2. Rule for Profile Images
-    match /profile_images/{allPaths=**} {
-       // This allows any user who is logged into your app to upload a profile picture
-       allow read, write: if request.auth != null;
+    match /profile_images/{userId}/{allPaths=**} {
+       // This allows logged in users to upload their own profile image
+       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
     // 3. Rule for Scan Images

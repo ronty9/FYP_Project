@@ -236,16 +236,18 @@ class _ScanHistoryBody extends StatelessWidget {
                         label: const Text('Breed'),
                         selected: tempType == ScanType.breed,
                         onSelected: (selected) {
-                          if (selected)
+                          if (selected) {
                             setState(() => tempType = ScanType.breed);
+                          }
                         },
                       ),
                       ChoiceChip(
                         label: const Text('Skin Disease'),
                         selected: tempType == ScanType.skinDisease,
                         onSelected: (selected) {
-                          if (selected)
+                          if (selected) {
                             setState(() => tempType = ScanType.skinDisease);
+                          }
                         },
                       ),
                     ],

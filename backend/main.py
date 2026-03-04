@@ -15,19 +15,19 @@ Start the server:
 import io
 import json
 import os
+import time
 
-import numpy as np
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from PIL import Image
-from pydantic import BaseModel
+import numpy as np  # type: ignore
+from fastapi import FastAPI, File, HTTPException, UploadFile  # type: ignore
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore
+from PIL import Image  # type: ignore
+from pydantic import BaseModel  # type: ignore
 
 # Firebase Admin SDK
 _firebase_admin_ready = False
 try:
-    import firebase_admin
-    from firebase_admin import auth as firebase_auth_admin
+    import firebase_admin  # type: ignore
+    from firebase_admin import auth as firebase_auth_admin  # type: ignore
 
     # Uses Application Default Credentials (ADC):
     #   • Cloud Run   → automatic via the default service account
@@ -46,14 +46,14 @@ try:
     import tensorflow as tf  # type: ignore
     # EfficientNet preprocess_input was serialised as a Lambda layer inside
     # cat_breed_kaggle.keras and dog_breed_best_model.keras.
-    from tensorflow.keras.applications.efficientnet import (
+    from tensorflow.keras.applications.efficientnet import (  # type: ignore
         preprocess_input as efficientnet_preprocess_input,
     )
     # MobileNetV2 preprocess_input is used for the skin disease models
-    from tensorflow.keras.applications.mobilenet_v2 import (
+    from tensorflow.keras.applications.mobilenet_v2 import (  # type: ignore
         preprocess_input as mobilenet_v2_preprocess_input,
     )
-except ImportError as exc:
+except ImportError as exc:  # type: ignore
     raise RuntimeError(
         "TensorFlow is not installed. Run: pip install tensorflow"
     ) from exc
@@ -99,19 +99,23 @@ dog_model = tf.keras.models.load_model(
 print("  dog breed model OK")
 
 # --- 3. Load Skin Disease Models ---
+cat_disease_model = None
+dog_disease_model = None
 try:
     cat_disease_model = tf.keras.models.load_model(
         _model_path("cat_disease_model.keras"),
         custom_objects=_DISEASE_CUSTOM_OBJ,
     )
     print("  cat disease model OK")
-    
+
     dog_disease_model = tf.keras.models.load_model(
         _model_path("dog_disease_model.keras"),
         custom_objects=_DISEASE_CUSTOM_OBJ,
     )
     print("  dog disease model OK")
 except Exception as e:
+    cat_disease_model = None
+    dog_disease_model = None
     print(f"  WARNING: Could not load disease models. Ensure files are in the models folder. Error: {e}")
 
 
@@ -125,8 +129,9 @@ _DOG_SIZE: int = dog_model.input_shape[1]
 # Try to get disease model input sizes safely
 _CAT_DISEASE_SIZE: int = 224
 _DOG_DISEASE_SIZE: int = 224
-if 'cat_disease_model' in locals():
+if cat_disease_model is not None:
     _CAT_DISEASE_SIZE = cat_disease_model.input_shape[1]
+if dog_disease_model is not None:
     _DOG_DISEASE_SIZE = dog_disease_model.input_shape[1]
 
 # --- Load Labels ---
@@ -162,9 +167,13 @@ app = FastAPI(
     version="1.1.0",
 )
 
+# Allowed origins for CORS (default to localhost for dev)
+origins_str = os.environ.get("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000")
+origins = [o.strip() for o in origins_str.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -229,14 +238,13 @@ async def predict(file: UploadFile = File(...)):
                    "Please upload a JPEG or PNG image.",
         )
 
-    import time
     t0 = time.perf_counter()
 
     data = await file.read()
     print(f"[TIMING] image received: {len(data)/1024:.1f} KB  ({time.perf_counter()-t0:.2f}s)")
 
     try:
-        sp_arr = _preprocess_raw(data, _SPECIES_SIZE)
+        sp_arr = _preprocess_normalised(data, _SPECIES_SIZE)  # type: ignore
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Could not decode image: {exc}")
 
@@ -260,11 +268,11 @@ async def predict(file: UploadFile = File(...)):
 
     # Stage 2 — breed identification
     if sp_label == "cat":
-        br_arr = _preprocess_raw(data, _CAT_SIZE)
+        br_arr = _preprocess_raw(data, _CAT_SIZE)  # type: ignore
         br_probs = cat_model(br_arr, training=False).numpy()[0]
         br_labels = cat_labels
     else:
-        br_arr = _preprocess_raw(data, _DOG_SIZE)
+        br_arr = _preprocess_raw(data, _DOG_SIZE)  # type: ignore
         br_probs = dog_model(br_arr, training=False).numpy()[0]
         br_labels = dog_labels
     print(f"[TIMING] breed done: {time.perf_counter()-t0:.2f}s total")
@@ -331,13 +339,12 @@ async def predict_disease(file: UploadFile = File(...)):
                    "Please upload a JPEG or PNG image.",
         )
 
-    import time
     t0 = time.perf_counter()
 
     data = await file.read()
     
     try:
-        sp_arr = _preprocess_raw(data, _SPECIES_SIZE)
+        sp_arr = _preprocess_normalised(data, _SPECIES_SIZE)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Could not decode image: {exc}")
 
@@ -358,25 +365,25 @@ async def predict_disease(file: UploadFile = File(...)):
         sp_conf = float(sp_probs[sp_idx])
 
     # Stage 2 — Disease identification
-    try:
-        if sp_label == "cat":
-            dis_arr = _preprocess_raw(data, _CAT_DISEASE_SIZE)
-            dis_probs = cat_disease_model(dis_arr, training=False).numpy()[0]
-            dis_labels = cat_disease_labels
-        else:
-            dis_arr = _preprocess_raw(data, _DOG_DISEASE_SIZE)
-            dis_probs = dog_disease_model(dis_arr, training=False).numpy()[0]
-            dis_labels = dog_disease_labels
-            
-        print(f"[TIMING] disease done: {time.perf_counter()-t0:.2f}s total")
-
-        # Return top 3 predictions for disease (instead of 5)
-        return {
-            "species": {"label": sp_label, "confidence": sp_conf},
-            "disease_predictions": _top_k(dis_probs, dis_labels, k=3),
-        }
-    except NameError:
+    if cat_disease_model is None or dog_disease_model is None:
         raise HTTPException(
-            status_code=500, 
-            detail="Disease models are not loaded. Please check backend files."
+            status_code=503,
+            detail="Disease models are not loaded. Please check backend files.",
         )
+
+    if sp_label == "cat":
+        dis_arr = _preprocess_raw(data, _CAT_DISEASE_SIZE)  # type: ignore
+        dis_probs = cat_disease_model(dis_arr, training=False).numpy()[0]  # type: ignore
+        dis_labels = cat_disease_labels
+    else:
+        dis_arr = _preprocess_raw(data, _DOG_DISEASE_SIZE)  # type: ignore
+        dis_probs = dog_disease_model(dis_arr, training=False).numpy()[0]  # type: ignore
+        dis_labels = dog_disease_labels
+
+    print(f"[TIMING] disease done: {time.perf_counter()-t0:.2f}s total")
+
+    # Return top 3 predictions for disease (instead of 5)
+    return {
+        "species": {"label": sp_label, "confidence": sp_conf},
+        "disease_predictions": _top_k(dis_probs, dis_labels, k=3),
+    }

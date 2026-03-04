@@ -4,6 +4,7 @@
 // Tests every pure-logic unit across all modules, then prints a
 // formatted summary report with pass / fail counts.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fyp_project/utils/validation_utils.dart';
 import 'package:fyp_project/models/user_account.dart';
@@ -23,11 +24,7 @@ class _TestReport {
   static int _currentIndex = 0;
 
   static void record(String id, String module, String description) {
-    _results.add(_TestEntry(
-      id: id,
-      module: module,
-      description: description,
-    ));
+    _results.add(_TestEntry(id: id, module: module, description: description));
     _currentIndex = _results.length - 1;
   }
 
@@ -44,12 +41,22 @@ class _TestReport {
     final failed = _results.where((r) => !r.passed).length;
     final total = _results.length;
 
-    print('');
-    print('╔══════════════════════════════════════════════════════════════════════════════╗');
-    print('║                   FYP AUTOMATED UNIT TEST — FULL REPORT                    ║');
-    print('╠══════════════════════════════════════════════════════════════════════════════╣');
-    print('║  ID     │ Module          │ Description                        │ Status     ║');
-    print('╠══════════════════════════════════════════════════════════════════════════════╣');
+    debugPrint('');
+    debugPrint(
+      '╔══════════════════════════════════════════════════════════════════════════════╗',
+    );
+    debugPrint(
+      '║                   FYP AUTOMATED UNIT TEST — FULL REPORT                    ║',
+    );
+    debugPrint(
+      '╠══════════════════════════════════════════════════════════════════════════════╣',
+    );
+    debugPrint(
+      '║  ID     │ Module          │ Description                        │ Status     ║',
+    );
+    debugPrint(
+      '╠══════════════════════════════════════════════════════════════════════════════╣',
+    );
 
     for (final r in _results) {
       final status = r.passed ? '✅ PASS' : '❌ FAIL';
@@ -58,22 +65,32 @@ class _TestReport {
       final desc = r.description.length > 34
           ? '${r.description.substring(0, 31)}...'
           : r.description.padRight(34);
-      print('║  $id │ $mod │ $desc │ $status   ║');
+      debugPrint('║  $id │ $mod │ $desc │ $status   ║');
     }
 
-    print('╠══════════════════════════════════════════════════════════════════════════════╣');
-    print('║  TOTAL: $total tests   |   ✅ PASSED: $passed   |   ❌ FAILED: $failed${' ' * (28 - total.toString().length - passed.toString().length - failed.toString().length)}║');
-    print('╚══════════════════════════════════════════════════════════════════════════════╝');
-    print('');
+    debugPrint(
+      '╠══════════════════════════════════════════════════════════════════════════════╣',
+    );
+    debugPrint(
+      '║  TOTAL: $total tests   |   ✅ PASSED: $passed   |   ❌ FAILED: $failed${' ' * (28 - total.toString().length - passed.toString().length - failed.toString().length)}║',
+    );
+    debugPrint(
+      '╚══════════════════════════════════════════════════════════════════════════════╝',
+    );
+    debugPrint('');
   }
 }
 
 class _TestEntry {
-  _TestEntry({required this.id, required this.module, required this.description, this.passed = false});
+  _TestEntry({
+    required this.id,
+    required this.module,
+    required this.description,
+  });
   final String id;
   final String module;
   final String description;
-  bool passed;
+  bool passed = false;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -126,7 +143,10 @@ void main() {
     });
 
     trackedTest('TC-05', 'Auth', 'Accept valid registration', () {
-      expect(ValidationUtils.isValidRegistration('John', 'j@e.com', 'p1'), true);
+      expect(
+        ValidationUtils.isValidRegistration('John', 'j@e.com', 'p1'),
+        true,
+      );
     });
 
     trackedTest('TC-06', 'Auth', 'Reject whitespace-only name', () {
@@ -151,11 +171,17 @@ void main() {
     });
 
     trackedTest('TC-10', 'Pet', 'Reject missing pet breed', () {
-      expect(ValidationUtils.isValidPetDetails('Bella', 'Dog', '', 'Female'), false);
+      expect(
+        ValidationUtils.isValidPetDetails('Bella', 'Dog', '', 'Female'),
+        false,
+      );
     });
 
     trackedTest('TC-11', 'Pet', 'Accept complete pet details', () {
-      expect(ValidationUtils.isValidPetDetails('Bella', 'Dog', 'Poodle', 'Female'), true);
+      expect(
+        ValidationUtils.isValidPetDetails('Bella', 'Dog', 'Poodle', 'Female'),
+        true,
+      );
     });
 
     trackedTest('TC-12', 'Pet', 'Calculate age in years', () {
@@ -267,8 +293,11 @@ void main() {
   group('Model — UserAccount', () {
     trackedTest('TC-28', 'UserAccount', 'Create from constructor', () {
       final u = UserAccount(
-        id: 'u1', name: 'Ali', email: 'ali@mail.com',
-        joinDate: '2025-01-01', status: 'Active',
+        id: 'u1',
+        name: 'Ali',
+        email: 'ali@mail.com',
+        joinDate: '2025-01-01',
+        status: 'Active',
       );
       expect(u.name, 'Ali');
       expect(u.petsCount, 0);
@@ -276,8 +305,11 @@ void main() {
 
     trackedTest('TC-29', 'UserAccount', 'copyWith updates fields', () {
       final u = UserAccount(
-        id: 'u1', name: 'Ali', email: 'ali@mail.com',
-        joinDate: '2025-01-01', status: 'Active',
+        id: 'u1',
+        name: 'Ali',
+        email: 'ali@mail.com',
+        joinDate: '2025-01-01',
+        status: 'Active',
       );
       final u2 = u.copyWith(name: 'Abu', petsCount: 3);
       expect(u2.name, 'Abu');
@@ -332,7 +364,10 @@ void main() {
     });
 
     trackedTest('TC-37', 'Reminder', 'duration value correct', () {
-      expect(ReminderDuration.thirtyMinutes.duration, const Duration(minutes: 30));
+      expect(
+        ReminderDuration.thirtyMinutes.duration,
+        const Duration(minutes: 30),
+      );
     });
 
     trackedTest('TC-38', 'Reminder', 'calculateReminderTime', () {
@@ -392,8 +427,11 @@ void main() {
   group('Model — CalendarEvent', () {
     trackedTest('TC-44', 'CalendarEvent', 'Constructor defaults', () {
       final e = CalendarEvent(
-        day: 10, petName: 'Buddy', activity: 'Grooming',
-        location: 'PetShop', time: '2:00 PM',
+        day: 10,
+        petName: 'Buddy',
+        activity: 'Grooming',
+        location: 'PetShop',
+        time: '2:00 PM',
       );
       expect(e.reminderEnabled, false);
       expect(e.isCompleted, false);
@@ -579,9 +617,9 @@ void main() {
     trackedTest('TC-60', 'UserAccount', 'fromMap with partial data', () {
       final u = UserAccount.fromMap('id2', {'userName': 'Siti'});
       expect(u.name, 'Siti');
-      expect(u.email, '');         // default
-      expect(u.status, 'Active');  // default
-      expect(u.petsCount, 0);     // default
+      expect(u.email, ''); // default
+      expect(u.status, 'Active'); // default
+      expect(u.petsCount, 0); // default
     });
   });
 }
