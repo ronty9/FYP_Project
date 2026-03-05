@@ -14,6 +14,7 @@ class PetInfo {
     this.weightKg,
     required this.age,
     this.galleryImages = const [],
+    this.notes,
   });
 
   final String? id;
@@ -30,4 +31,5 @@ class PetInfo {
   final double? weightKg;
   final String age;
   final List<String> galleryImages;
+  final String? notes;
 }

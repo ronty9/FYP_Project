@@ -562,6 +562,7 @@ class PetProfileViewModel extends BaseViewModel {
       weightKg: weightKg,
       age: dateOfBirth != null ? _formatAge(dateOfBirth) : 'Unknown',
       galleryImages: const [],
+      notes: data['notes'] as String?,
     );
   }
 

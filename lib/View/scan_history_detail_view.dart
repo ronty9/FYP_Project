@@ -33,7 +33,7 @@ class ScanHistoryDetailView extends StatelessWidget {
               top: MediaQuery.of(context).padding.top + 12,
               left: 20,
               right: 20,
-              bottom: 28,
+              bottom: 16,
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -89,30 +89,30 @@ class ScanHistoryDetailView extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(typeIcon, color: Colors.white, size: 40),
+                  child: Icon(typeIcon, color: Colors.white, size: 24),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 Text(
                   item.topLabel,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 5,
+                    horizontal: 10,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
@@ -121,7 +121,7 @@ class ScanHistoryDetailView extends StatelessWidget {
                   child: Text(
                     typeLabel,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 11,
                       color: Colors.white,
                       fontWeight: FontWeight.w500,
                     ),
@@ -133,108 +133,20 @@ class ScanHistoryDetailView extends StatelessWidget {
           // --- Content ---
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Scanned Image Card
+                  // Scanned Image Card — floating below header
                   if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _InfoCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: accentColor.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    Icons.image_rounded,
-                                    color: accentColor,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                const Text(
-                                  'Scanned Image',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1A1A1A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Container(
-                              width: double.infinity,
-                              height: 200,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.08),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: Image.network(
-                                item.imageUrl!,
-                                fit: BoxFit.contain,
-                                loadingBuilder:
-                                    (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Center(
-                                        child: CircularProgressIndicator(
-                                          value:
-                                              loadingProgress
-                                                      .expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                        .cumulativeBytesLoaded /
-                                                    loadingProgress
-                                                        .expectedTotalBytes!
-                                              : null,
-                                          color: accentColor,
-                                          strokeWidth: 2.5,
-                                        ),
-                                      );
-                                    },
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.broken_image_rounded,
-                                          size: 40,
-                                          color: Colors.grey.shade400,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'Image unavailable',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.grey.shade500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    _ImageDisplayCard(
+                      imageUrl: item.imageUrl!,
+                      accentColor: accentColor,
+                      typeIcon: typeIcon,
+                      typeLabel: typeLabel,
                     ),
+                  if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
+                    const SizedBox(height: 4),
                   // Confidence Card
                   _InfoCard(
                     child: Column(
@@ -489,6 +401,129 @@ class ScanHistoryDetailView extends StatelessWidget {
           'The breed "${item.topLabel}" was identified as the most likely match with ${(item.confidence * 100).toStringAsFixed(1)}% confidence. '
           'Mixed breeds may show characteristics of multiple breed types.';
     }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Image Display Card (floating below header)
+// ═══════════════════════════════════════════════════════════════════════════
+class _ImageDisplayCard extends StatelessWidget {
+  const _ImageDisplayCard({
+    required this.imageUrl,
+    required this.accentColor,
+    required this.typeIcon,
+    required this.typeLabel,
+  });
+  final String imageUrl;
+  final Color accentColor;
+  final IconData typeIcon;
+  final String typeLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+      transform: Matrix4.translationValues(0, -16, 0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: double.infinity,
+              height: 220,
+              color: Colors.grey.shade50,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                height: double.infinity,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                          : null,
+                      color: accentColor,
+                      strokeWidth: 2.5,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.broken_image_rounded,
+                          size: 40,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Image unavailable',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          // Scan type badge
+          Positioned(
+            bottom: 12,
+            left: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: accentColor,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(typeIcon, size: 14, color: Colors.white),
+                  const SizedBox(width: 6),
+                  Text(
+                    typeLabel,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

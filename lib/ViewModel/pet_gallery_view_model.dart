@@ -20,6 +20,7 @@ class PetGalleryViewModel extends BaseViewModel {
   PetInfo? get pet => _pet;
   List<File> get pendingUploads => List.unmodifiable(_pendingUploads);
   bool get hasPendingUploads => _pendingUploads.isNotEmpty;
+  List<String> get pendingImages => _pendingUploads.map((f) => f.path).toList();
 
   List<dynamic> get allImages {
     final images = <String>[];
@@ -35,6 +36,8 @@ class PetGalleryViewModel extends BaseViewModel {
     images.addAll(
       _uploadedImages.where((url) => !_removedRemoteUrls.contains(url)),
     );
+    // Add pending (not-yet-uploaded) local file paths
+    images.addAll(_pendingUploads.map((f) => f.path));
     return images;
   }
 

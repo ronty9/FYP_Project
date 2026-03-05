@@ -49,13 +49,8 @@ class _ScanResultBody extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
         children: [
-          // ── Gradient Header with Image ──
-          _ResultHeader(
-            accentColor: accentColor,
-            typeIcon: typeIcon,
-            typeLabel: typeLabel,
-            imageFile: viewModel.imageFile,
-          ),
+          // ── Gradient Header (nav only) ──
+          _ResultHeader(accentColor: accentColor),
 
           // ── Content ──
           if (viewModel.isLoading)
@@ -68,6 +63,8 @@ class _ScanResultBody extends StatelessWidget {
               colorScheme: colorScheme,
               accentColor: accentColor,
               isDisease: isDisease,
+              typeIcon: typeIcon,
+              typeLabel: typeLabel,
             ),
         ],
       ),
@@ -76,19 +73,11 @@ class _ScanResultBody extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Result Header
+// Result Header (nav bar only — no image)
 // ═══════════════════════════════════════════════════════════════════════════
 class _ResultHeader extends StatelessWidget {
-  const _ResultHeader({
-    required this.accentColor,
-    required this.typeIcon,
-    required this.typeLabel,
-    required this.imageFile,
-  });
+  const _ResultHeader({required this.accentColor});
   final Color accentColor;
-  final IconData typeIcon;
-  final String typeLabel;
-  final File imageFile;
 
   @override
   Widget build(BuildContext context) {
@@ -122,121 +111,111 @@ class _ResultHeader extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          // Nav row
-          Row(
-            children: [
-              _HeaderIconButton(
-                icon: Icons.arrow_back_ios_new_rounded,
-                // Using read() so it correctly calls the view model without watching
-                onTap: () => context
-                    .read<ScanResultViewModel>()
-                    .onScanAgainPressed(context),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Text(
-                  'Scan Result',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-            ],
+          _HeaderIconButton(
+            icon: Icons.arrow_back_ios_new_rounded,
+            onTap: () =>
+                context.read<ScanResultViewModel>().onScanAgainPressed(context),
           ),
-          const SizedBox(height: 16),
-
-          // Image preview
-          Container(
-            width: double.infinity,
-            height: 168,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Text(
+              'Scan Result',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: -0.3,
+              ),
             ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.file(
-                    imageFile,
-                    fit: BoxFit.contain,
-                    width: double.infinity,
-                    height: double.infinity,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Scanned Image Card (standalone, below header)
+// ═══════════════════════════════════════════════════════════════════════════
+class _ImageDisplayCard extends StatelessWidget {
+  const _ImageDisplayCard({
+    required this.imageFile,
+    required this.accentColor,
+    required this.typeIcon,
+    required this.typeLabel,
+  });
+  final File imageFile;
+  final Color accentColor;
+  final IconData typeIcon;
+  final String typeLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+      transform: Matrix4.translationValues(0, -16, 0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: double.infinity,
+              height: 200,
+              color: Colors.grey.shade50,
+              child: Image.file(
+                imageFile,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                height: double.infinity,
+              ),
+            ),
+          ),
+          // Scan type badge
+          Positioned(
+            bottom: 12,
+            left: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: accentColor,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                // Top gradient overlay
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 56,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
-                      ),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.4),
-                          Colors.transparent,
-                        ],
-                      ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(typeIcon, size: 14, color: Colors.white),
+                  const SizedBox(width: 6),
+                  Text(
+                    typeLabel,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ),
-                Positioned(
-                  bottom: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accentColor,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: accentColor.withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(typeIcon, size: 14, color: Colors.white),
-                        const SizedBox(width: 6),
-                        Text(
-                          typeLabel,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -435,20 +414,32 @@ class _ResultContent extends StatelessWidget {
     required this.colorScheme,
     required this.accentColor,
     required this.isDisease,
+    required this.typeIcon,
+    required this.typeLabel,
   });
   final ScanResultViewModel viewModel;
   final ColorScheme colorScheme;
   final Color accentColor;
   final bool isDisease;
+  final IconData typeIcon;
+  final String typeLabel;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Scanned Image Card
+            _ImageDisplayCard(
+              imageFile: viewModel.imageFile,
+              accentColor: accentColor,
+              typeIcon: typeIcon,
+              typeLabel: typeLabel,
+            ),
+            const SizedBox(height: 4),
             // Top Result with Circular Gauge
             _TopResultCard(
               label: viewModel.topPrediction?.label ?? '',

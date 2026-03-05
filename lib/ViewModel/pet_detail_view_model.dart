@@ -1,16 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../calendar_event.dart';
 import '../models/pet_info.dart';
+import '../models/reminder_duration.dart';
+import '../models/schedule_type.dart';
 import '../View/edit_pet_view.dart';
 import '../View/pet_gallery_view.dart';
+import '../View/schedule_detail_view.dart';
 import 'base_view_model.dart';
 
 class PetDetailViewModel extends BaseViewModel {
-  PetDetailViewModel(PetInfo pet) : _pet = pet;
+  PetDetailViewModel(PetInfo pet) : _pet = pet {
+    _fetchNextSchedule();
+    _loadNotes();
+  }
 
   PetInfo _pet;
   PetInfo get pet => _pet;
+
+  // --- Next Schedule ---
+  CalendarEvent? _nextScheduleEvent;
+  CalendarEvent? get nextScheduleEvent => _nextScheduleEvent;
+
+  String _nextScheduleLabel = '';
+  String get nextScheduleLabel => _nextScheduleLabel;
+
+  bool _isLoadingSchedule = true;
+  bool get isLoadingSchedule => _isLoadingSchedule;
+
+  // --- Notes ---
+  String _notes = '';
+  String get notes => _notes;
+
+  bool _isLoadingNotes = true;
+  bool get isLoadingNotes => _isLoadingNotes;
 
   bool get isDog => _pet.species.toLowerCase() == 'dog';
 
@@ -73,8 +97,14 @@ class PetDetailViewModel extends BaseViewModel {
         weightKg: weightKg,
         age: dateOfBirth != null ? _formatAge(dateOfBirth) : _pet.age,
         galleryImages: _pet.galleryImages,
+        notes: data['notes'] as String?,
       );
+
+      _notes = _pet.notes ?? '';
       notifyListeners();
+
+      // Refresh schedule too
+      await _fetchNextSchedule();
     } catch (error) {
       setError(error.toString());
     } finally {
@@ -82,6 +112,150 @@ class PetDetailViewModel extends BaseViewModel {
     }
   }
 
+  // --- Schedule Fetching ---
+  Future<void> _fetchNextSchedule() async {
+    _isLoadingSchedule = true;
+    notifyListeners();
+
+    try {
+      final petId = _pet.id;
+      if (petId == null || petId.isEmpty) {
+        _nextScheduleLabel = 'No upcoming schedule';
+        _nextScheduleEvent = null;
+        _isLoadingSchedule = false;
+        notifyListeners();
+        return;
+      }
+
+      final now = DateTime.now();
+      final schedulesSnap = await FirebaseFirestore.instance
+          .collection('schedules')
+          .where('petId', isEqualTo: petId)
+          .get();
+
+      DateTime? nearestDate;
+      QueryDocumentSnapshot<Map<String, dynamic>>? nearestDoc;
+
+      for (final doc in schedulesSnap.docs) {
+        final data = doc.data();
+        final isCompleted = data['isCompleted'] as bool? ?? false;
+        if (isCompleted) continue;
+
+        final ts = data['startDateTime'] as Timestamp?;
+        if (ts == null) continue;
+        final dt = ts.toDate();
+        if (dt.isBefore(now)) continue;
+
+        if (nearestDate == null || dt.isBefore(nearestDate)) {
+          nearestDate = dt;
+          nearestDoc = doc;
+        }
+      }
+
+      if (nearestDoc != null && nearestDate != null) {
+        final data = nearestDoc.data();
+        final title = data['scheTitle'] as String? ?? 'Untitled';
+        final diff = nearestDate.difference(now);
+        String when;
+        if (diff.inDays == 0) {
+          when = 'Today';
+        } else if (diff.inDays == 1) {
+          when = 'Tomorrow';
+        } else {
+          when = 'In ${diff.inDays} days';
+        }
+        _nextScheduleLabel = '$title — $when';
+
+        final startTs = data['startDateTime'] as Timestamp?;
+        final endTs = data['endDateTime'] as Timestamp?;
+        final reminderTs = data['reminderDateTime'] as Timestamp?;
+
+        _nextScheduleEvent = CalendarEvent(
+          day: nearestDate.day,
+          petName: _pet.name,
+          activity: title,
+          location: data['scheDescription'] as String? ?? '',
+          time: _formatTime(startTs?.toDate()),
+          scheduleId: nearestDoc.id,
+          startDateTime: startTs?.toDate(),
+          endDateTime: endTs?.toDate(),
+          isCompleted: data['isCompleted'] as bool? ?? false,
+          petId: petId,
+          scheduleType: ScheduleType.fromFirestore(
+            data['scheduleType'] as String?,
+          ),
+          reminderEnabled: data['reminderEnabled'] as bool? ?? false,
+          reminderDateTime: reminderTs?.toDate(),
+          reminderDuration: ReminderDurationExtension.fromString(
+            data['reminderDuration'] as String?,
+          ),
+        );
+      } else {
+        _nextScheduleLabel = 'No upcoming schedule';
+        _nextScheduleEvent = null;
+      }
+    } catch (e) {
+      _nextScheduleLabel = 'No upcoming schedule';
+      _nextScheduleEvent = null;
+      debugPrint('Error fetching next schedule: $e');
+    } finally {
+      _isLoadingSchedule = false;
+      notifyListeners();
+    }
+  }
+
+  // --- Notes ---
+  Future<void> _loadNotes() async {
+    _isLoadingNotes = true;
+    notifyListeners();
+
+    try {
+      final petId = _pet.id;
+      if (petId == null || petId.isEmpty) return;
+
+      final snapshot = await FirebaseFirestore.instance
+          .collection('pet')
+          .doc(petId)
+          .get();
+      if (!snapshot.exists) return;
+
+      final data = snapshot.data();
+      _notes = (data?['notes'] as String?) ?? '';
+    } catch (e) {
+      debugPrint('Error loading notes: $e');
+    } finally {
+      _isLoadingNotes = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> saveNotes(String notes) async {
+    final petId = _pet.id;
+    if (petId == null || petId.isEmpty) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('pet').doc(petId).update({
+        'notes': notes,
+      });
+
+      _notes = notes;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error saving notes: $e');
+    }
+  }
+
+  void navigateToSchedule(BuildContext context) {
+    if (_nextScheduleEvent == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ScheduleDetailView(event: _nextScheduleEvent!),
+      ),
+    ).then((_) => _fetchNextSchedule());
+  }
+
+  // --- Navigation ---
   void onBackPressed(BuildContext context) {
     Navigator.pop(context);
   }
@@ -134,6 +308,7 @@ class PetDetailViewModel extends BaseViewModel {
     }
   }
 
+  // --- Helpers ---
   String _formatAge(DateTime dob) {
     final now = DateTime.now();
     int years = now.year - dob.year;
@@ -152,5 +327,13 @@ class PetDetailViewModel extends BaseViewModel {
       return '$years years';
     }
     return '$years years $months months';
+  }
+
+  String _formatTime(DateTime? dt) {
+    if (dt == null) return '';
+    final hour = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 }
