@@ -20,8 +20,7 @@ class _PrivacyPolicyBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<PrivacyPolicyViewModel>();
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD), // App Theme Background
@@ -90,24 +89,7 @@ class _PrivacyPolicyBody extends StatelessWidget {
                 ),
               ),
             ),
-
-            const SizedBox(height: 24),
-
-            // --- Contact Support Footer ---
-            Center(
-              child: TextButton(
-                onPressed: () => viewModel.onContactSupport(context),
-                child: Text(
-                  'Have questions? Contact Support',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.primary,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 8), // Just a little bottom padding
           ],
         ),
       ),

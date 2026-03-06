@@ -38,11 +38,4 @@ class PrivacyPolicyViewModel extends BaseViewModel {
   ];
 
   List<PrivacyPolicyItem> get policies => List.unmodifiable(_policies);
-
-  void onContactSupport(BuildContext context) {
-    // Navigate to support or show email intent
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Contact support action triggered.')),
-    );
-  }
 }

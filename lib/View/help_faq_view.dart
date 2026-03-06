@@ -103,7 +103,7 @@ class _HelpFaqBody extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // --- Search Bar (UPDATED) ---
+                  // --- Search Bar ---
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
@@ -118,7 +118,6 @@ class _HelpFaqBody extends StatelessWidget {
                       ],
                     ),
                     child: TextField(
-                      // Connect to ViewModel search logic
                       onChanged: (value) => viewModel.search(value),
                       decoration: InputDecoration(
                         hintText: 'Search for help...',
@@ -187,75 +186,6 @@ class _HelpFaqBody extends StatelessWidget {
                       );
                     }),
 
-                  const SizedBox(height: 12),
-
-                  // --- Contact Support Card ---
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E9),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(
-                            Icons.support_agent,
-                            color: Colors.green,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Still need help?',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2D3142),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Contact our support team',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -274,9 +204,6 @@ class _CategoryCard extends StatefulWidget {
 }
 
 class _CategoryCardState extends State<_CategoryCard> {
-  // If user is searching, auto-expand categories to show results
-  // We can't easily detect search state here, so we default to collapsed
-  // unless specific logic is added. For now, keep as user-controlled toggle.
   bool _isExpanded = false;
 
   @override
