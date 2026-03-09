@@ -1,14 +1,171 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default locked-down rule: no one can read or write unless explicitly allowed
+
+    // ═══════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ═══════════════════════════════════════════
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // ═══════════════════════════════════════════
+    // DEFAULT: Deny all access
+    // ═══════════════════════════════════════════
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Allow users to read and write only their own user document
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // ═══════════════════════════════════════════
+    // USER COLLECTION
+    // Custom doc IDs (e.g. U000001), providerId = Auth UID
+    // ═══════════════════════════════════════════
+    match /user/{userId} {
+      // Any authenticated user can read user docs
+      // (needed for username lookup at login, calendar pet lookups)
+      allow read: if isSignedIn();
+
+      // Users can create their own doc during registration (transaction)
+      allow create: if isSignedIn();
+
+      // Users can only update docs where providerId matches their Auth UID
+      // Prevents role escalation by blocking changes to userRole
+      allow update: if isSignedIn() &&
+        resource.data.providerId == request.auth.uid &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['userRole']));
+
+      // Only allow delete from authenticated users
+      // (admin enforcement handled at application level)
+      allow delete: if isSignedIn();
+    }
+
+    // ═══════════════════════════════════════════
+    // PET COLLECTION
+    // userId = custom user doc ID (e.g. U000001)
+    // ═══════════════════════════════════════════
+    match /pet/{petId} {
+      // Any authenticated user can read pets
+      allow read: if isSignedIn();
+
+      // Any authenticated user can create a pet
+      allow create: if isSignedIn();
+
+      // Only allow update/delete if authenticated
+      allow update, delete: if isSignedIn();
+    }
+
+    // ═══════════════════════════════════════════
+    // SCAN HISTORY
+    // userId = Auth UID (strict ownership possible!)
+    // ═══════════════════════════════════════════
+    match /ScanHistory/{scanId} {
+      // Users can only read their own scan history
+      allow read: if isSignedIn() &&
+        resource.data.userId == request.auth.uid;
+
+      // Users can only create scans attributed to themselves
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Users can update/delete only their own scans
+      allow update, delete: if isSignedIn() &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // ═══════════════════════════════════════════
+    // SCHEDULES
+    // userId = custom user doc ID
+    // ═══════════════════════════════════════════
+    match /schedules/{scheduleId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+
+    // ═══════════════════════════════════════════
+    // NOTIFICATIONS
+    // userId = custom user doc ID
+    // ═══════════════════════════════════════════
+    match /notifications/{notifId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+
+    // ═══════════════════════════════════════════
+    // FEEDBACK
+    // userId = Auth UID (strict ownership on create)
+    // ═══════════════════════════════════════════
+    match /feedback/{feedbackId} {
+      // Any authenticated user can read feedback
+      // (admin needs to list all for management)
+      allow read: if isSignedIn();
+
+      // Users can create feedback attributed to themselves only
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Allow updates (admin replies, status changes)
+      allow update: if isSignedIn();
+
+      // Allow delete (admin cleanup)
+      allow delete: if isSignedIn();
+    }
+
+    // ═══════════════════════════════════════════
+    // COMMUNITY TIPS
+    // Public read, admin-only write (enforced at app level)
+    // ═══════════════════════════════════════════
+    match /community_tips/{tipId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
+    }
+
+    // ═══════════════════════════════════════════
+    // FAQ (Read-only reference data)
+    // ═══════════════════════════════════════════
+    match /faq/{faqId} {
+      allow read: if isSignedIn();
+      // Admin can manage FAQ entries
+      allow write: if isSignedIn();
+    }
+
+    // ═══════════════════════════════════════════
+    // BREED (Read-only reference data)
+    // ═══════════════════════════════════════════
+    match /breed/{breedId} {
+      allow read: if isSignedIn();
+      // No client-side writes — managed via Firebase Console
+      allow write: if false;
+    }
+
+    // ═══════════════════════════════════════════
+    // COUNTERS (Auto-increment ID generation)
+    // Used in transactions for user/feedback/tips creation
+    // ═══════════════════════════════════════════
+    match /counters/{counterId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // ═══════════════════════════════════════════
+    // OTPs (Pre-authentication access required)
+    // Used during registration before user has an account
+    // ═══════════════════════════════════════════
+    match /otps/{otpId} {
+      // Must be open — OTP flow happens before authentication
+      // Consider migrating OTP logic entirely to Cloud Functions
+      allow read, write: if true;
+    }
+
+    // ═══════════════════════════════════════════
+    // SYSTEM ACTIVITY LOGS (Immutable audit trail)
+    // ═══════════════════════════════════════════
+    match /system_activity_logs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      // Logs are immutable — no updates or deletes
+      allow update, delete: if false;
     }
   }
 }

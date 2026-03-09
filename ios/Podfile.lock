@@ -1218,14 +1218,6 @@ PODS:
     - Flutter
   - desktop_webview_auth (0.0.1):
     - Flutter
-  - FBAEMKit (17.0.3):
-    - FBSDKCoreKit_Basics (= 17.0.3)
-  - FBSDKCoreKit (17.0.3):
-    - FBAEMKit (= 17.0.3)
-    - FBSDKCoreKit_Basics (= 17.0.3)
-  - FBSDKCoreKit_Basics (17.0.3)
-  - FBSDKLoginKit (17.0.3):
-    - FBSDKCoreKit (= 17.0.3)
   - Firebase/Auth (12.8.0):
     - Firebase/CoreOnly
     - FirebaseAuth (~> 12.8.0)
@@ -1308,17 +1300,12 @@ PODS:
     - GoogleUtilities/Environment (~> 8.1)
     - GTMSessionFetcher/Core (< 6.0, >= 3.4)
   - Flutter (1.0.0)
-  - flutter_facebook_auth (6.2.0):
-    - FBSDKLoginKit (~> 17.0.0)
-    - Flutter
   - flutter_image_compress_common (1.0.0):
     - Flutter
     - Mantle
     - SDWebImage
     - SDWebImageWebPCoder
   - flutter_local_notifications (0.0.1):
-    - Flutter
-  - flutter_secure_storage (6.0.0):
     - Flutter
   - flutter_timezone (0.0.1):
     - Flutter
@@ -1480,9 +1467,6 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
-  - path_provider_foundation (0.0.1):
-    - Flutter
-    - FlutterMacOS
   - PromisesObjC (2.4.0)
   - RecaptchaInterop (101.0.0)
   - SDWebImage (5.21.6):
@@ -1505,14 +1489,11 @@ DEPENDENCIES:
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
   - Flutter (from `Flutter`)
-  - flutter_facebook_auth (from `.symlinks/plugins/flutter_facebook_auth/ios`)
   - flutter_image_compress_common (from `.symlinks/plugins/flutter_image_compress_common/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
-  - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
   - flutter_timezone (from `.symlinks/plugins/flutter_timezone/ios`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
-  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
 
 SPEC REPOS:
@@ -1521,10 +1502,6 @@ SPEC REPOS:
     - AppAuth
     - AppCheckCore
     - BoringSSL-GRPC
-    - FBAEMKit
-    - FBSDKCoreKit
-    - FBSDKCoreKit_Basics
-    - FBSDKLoginKit
     - Firebase
     - FirebaseAppCheckInterop
     - FirebaseAuth
@@ -1572,22 +1549,16 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/firebase_storage/ios"
   Flutter:
     :path: Flutter
-  flutter_facebook_auth:
-    :path: ".symlinks/plugins/flutter_facebook_auth/ios"
   flutter_image_compress_common:
     :path: ".symlinks/plugins/flutter_image_compress_common/ios"
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
-  flutter_secure_storage:
-    :path: ".symlinks/plugins/flutter_secure_storage/ios"
   flutter_timezone:
     :path: ".symlinks/plugins/flutter_timezone/ios"
   google_sign_in_ios:
     :path: ".symlinks/plugins/google_sign_in_ios/darwin"
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
-  path_provider_foundation:
-    :path: ".symlinks/plugins/path_provider_foundation/darwin"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
 
@@ -1601,10 +1572,6 @@ SPEC CHECKSUMS:
   cloud_firestore: 4bd00c3464706d9e09dabac0bb8e9610456109f5
   cloud_functions: 20f0d60aa8a30d7bb3dc3c796665e2d9de828b61
   desktop_webview_auth: 4cf620136c3d79796496eef85e59508e3a1a003d
-  FBAEMKit: 9900b2edd99a2d21629a6277e6166f14c6215799
-  FBSDKCoreKit: 0791f8f68a8630931a4c12aa23a56cc021551596
-  FBSDKCoreKit_Basics: 46d6b472c0dd0a5a7e972c025033d1c567f54eb4
-  FBSDKLoginKit: b4a4eba1d62eb452544411824f41689adabd5bd2
   Firebase: 9a58fdbc9d8655ed7b79a19cf9690bb007d3d46d
   firebase_auth: e9031a1dbe04a90d98e8d11ff2302352a1c6d9e8
   firebase_core: ee30637e6744af8e0c12a6a1e8a9718506ec2398
@@ -1622,10 +1589,8 @@ SPEC CHECKSUMS:
   FirebaseSharedSwift: f57ed48f4542b2d7eb4738f4f23ba443f78b3780
   FirebaseStorage: 7c37558dc72731aa5f0a1a2401d8c6de10a513f5
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_facebook_auth: 2f28c889d5727b4538ed8d25be3367092b2cbef7
   flutter_image_compress_common: 1697a328fd72bfb335507c6bca1a65fa5ad87df1
   flutter_local_notifications: 395056b3175ba4f08480a7c5de30cd36d69827e4
-  flutter_secure_storage: 1ed9476fba7e7a782b22888f956cce43e2c62f13
   flutter_timezone: 7c838e17ffd4645d261e87037e5bebf6d38fe544
   google_sign_in_ios: b48bb9af78576358a168361173155596c845f0b9
   GoogleSignIn: ce8c89bb9b37fb624b92e7514cc67335d1e277e4
@@ -1639,7 +1604,6 @@ SPEC CHECKSUMS:
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   Mantle: c5aa8794a29a022dfbbfc9799af95f477a69b62d
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   SDWebImage: 1bb6a1b84b6fe87b972a102bdc77dd589df33477
