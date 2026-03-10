@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
       create: (_) => PetProfileViewModel(),
       child: MaterialApp(
         navigatorKey: navigatorKey,
-        title: 'PetCare Auth',
+        title: 'PawScope',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         home: StreamBuilder<User?>(

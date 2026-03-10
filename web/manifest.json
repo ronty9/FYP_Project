@@ -1,11 +1,11 @@
 {
-    "name": "fyp_project",
-    "short_name": "fyp_project",
+    "name": "PawScope",
+    "short_name": "PawScope",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "PawScope - Smart Pet Care Companion",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

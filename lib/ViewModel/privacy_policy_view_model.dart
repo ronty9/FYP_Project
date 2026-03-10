@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'base_view_model.dart';
 
 class PrivacyPolicyItem {
