@@ -1,0 +1,947 @@
+<h1 id="chapter-system-deployment">Chapter: System Deployment</h1>
+<p><strong>Project:</strong> PawScope — Pet Health Monitoring
+System<br />
+<strong>Version:</strong> 1.0.0<br />
+<strong>Date:</strong> March 2026</p>
+<hr />
+<h2 id="system-deployment-overview">1. System Deployment Overview</h2>
+<p>PawScope is a cross-platform mobile application built with
+<strong>Flutter</strong> that provides pet owners with AI-powered breed
+identification and skin disease detection, alongside comprehensive pet
+health management features. The system deployment involves three major
+components:</p>
+<table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 26%" />
+<col style="width: 46%" />
+</colgroup>
+<thead>
+<tr>
+<th>Component</th>
+<th>Technology</th>
+<th>Deployment Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Mobile Application</strong></td>
+<td>Flutter (Dart)</td>
+<td>Android (APK/AAB), iOS (IPA)</td>
+</tr>
+<tr>
+<td><strong>AI Backend Server</strong></td>
+<td>Python, FastAPI, TensorFlow/Keras</td>
+<td>Google Cloud Run (Docker)</td>
+</tr>
+<tr>
+<td><strong>Cloud Services</strong></td>
+<td>Firebase Auth, Firestore, Storage, Cloud Functions</td>
+<td>Google Firebase Platform</td>
+</tr>
+</tbody>
+</table>
+<h3 id="deployment-architecture">1.1 Deployment Architecture</h3>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│                    End Users                            │
+│              (Android / iOS Devices)                    │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+          ┌────────────▼────────────┐
+          │   PawScope Flutter App  │
+          │   (Mobile Client)       │
+          └───┬──────────┬──────────┘
+              │          │
+    ┌─────────▼──┐  ┌────▼──────────────────────┐
+    │  Firebase   │  │  Google Cloud Run          │
+    │  Services   │  │  (AI Backend - FastAPI)     │
+    │             │  │                             │
+    │ • Auth      │  │ • /predict (Breed ID)       │
+    │ • Firestore │  │ • /predict-disease (Skin)   │
+    │ • Storage   │  │ • /reset-password           │
+    │ • Functions │  │ • TensorFlow/Keras Models   │
+    └─────────────┘  └─────────────────────────────┘</code></pre>
+<h3 id="deployment-tasks-completed">1.2 Deployment Tasks Completed</h3>
+<p>The following implementation tasks were carried out during the
+deployment phase:</p>
+<h4 id="file-creation-and-conversion">1.2.1 File Creation and
+Conversion</h4>
+<table>
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 68%" />
+</colgroup>
+<thead>
+<tr>
+<th>Task</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>AI Model Packaging</strong></td>
+<td>TensorFlow/Keras models (<code>species_best.keras</code>, breed
+models, disease models) were packaged from the training environment
+(<code>lib/AI/models/</code>) into the Docker container at
+<code>/app/models/</code>.</td>
+</tr>
+<tr>
+<td><strong>Docker Containerisation</strong></td>
+<td>The AI backend was containerised using a <code>Dockerfile</code>
+based on <code>python:3.11-slim</code> with all dependencies
+(<code>tensorflow</code>, <code>pillow</code>, <code>fastapi</code>,
+<code>firebase-admin</code>, etc.) installed via
+<code>requirements.txt</code>.</td>
+</tr>
+<tr>
+<td><strong>Firebase Configuration</strong></td>
+<td>Platform-specific configuration files were generated:
+<code>google-services.json</code> (Android),
+<code>GoogleService-Info.plist</code> (iOS/macOS), and
+<code>firebase_options.dart</code> (Dart).</td>
+</tr>
+<tr>
+<td><strong>Security Rules</strong></td>
+<td>Firestore and Storage security rules were authored to enforce
+per-user data isolation (users can only read/write their own data).</td>
+</tr>
+<tr>
+<td><strong>Cloud Functions</strong></td>
+<td>Two serverless functions (<code>resetPassword</code> and
+<code>sendOtp</code>) were deployed to the <code>asia-southeast1</code>
+region using Firebase Cloud Functions v2, with API keys stored as
+Firebase Secrets.</td>
+</tr>
+<tr>
+<td><strong>Application Build</strong></td>
+<td>Flutter release builds were generated for Android (APK/AAB) and iOS
+(IPA) using <code>flutter build apk --release</code> and
+<code>flutter build ios --release</code>.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="changeover-strategy">1.2.2 Changeover Strategy</h4>
+<p>A <strong>Direct Changeover</strong> (also known as “Big Bang”)
+strategy was adopted for the initial deployment. Since PawScope is a new
+system without a predecessor, there was no legacy system to run in
+parallel. The deployment proceeded as follows:</p>
+<ol type="1">
+<li><strong>Backend First</strong> — The AI backend was deployed to
+Google Cloud Run and verified with the <code>/health</code>
+endpoint.</li>
+<li><strong>Firebase Services Second</strong> — Firestore rules, Storage
+rules, and Cloud Functions were deployed and tested.</li>
+<li><strong>Mobile App Last</strong> — Once all backend services were
+confirmed operational, the mobile application was distributed to test
+devices and then released.</li>
+</ol>
+<hr />
+<h2 id="system-backup-and-risk-management">2. System Backup and Risk
+Management</h2>
+<h3 id="backup-procedures">2.1 Backup Procedures</h3>
+<p>Since PawScope relies on cloud-managed services, backup procedures
+are designed around each component:</p>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 29%" />
+<col style="width: 23%" />
+<col style="width: 23%" />
+</colgroup>
+<thead>
+<tr>
+<th>Component</th>
+<th>Backup Method</th>
+<th>Frequency</th>
+<th>Retention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Firestore Database</strong></td>
+<td>Firebase automated daily backups + manual export via
+<code>gcloud firestore export</code> to a Cloud Storage bucket</td>
+<td>Daily (automated), On-demand (manual before major changes)</td>
+<td>30 days</td>
+</tr>
+<tr>
+<td><strong>Firebase Storage</strong> (pet photos, scan images, profile
+photos)</td>
+<td>Object versioning enabled on the Cloud Storage bucket; cross-region
+replication configured</td>
+<td>Continuous (versioning)</td>
+<td>Current + 3 previous versions</td>
+</tr>
+<tr>
+<td><strong>AI Models</strong></td>
+<td>Model files versioned in Git repository
+(<code>lib/AI/models/</code>); production copies stored in the Docker
+image registry (Google Artifact Registry)</td>
+<td>Per deployment</td>
+<td>All tagged versions retained</td>
+</tr>
+<tr>
+<td><strong>Source Code</strong></td>
+<td>Git version control with remote repository; feature branching
+workflow</td>
+<td>Continuous</td>
+<td>Full history</td>
+</tr>
+<tr>
+<td><strong>Cloud Functions</strong></td>
+<td>Source code in <code>/functions/</code> directory under Git;
+deployed versions retained by Firebase</td>
+<td>Per deployment</td>
+<td>All versions retained</td>
+</tr>
+<tr>
+<td><strong>Firebase Auth</strong></td>
+<td>Managed entirely by Firebase; user export available via
+<code>firebase auth:export</code></td>
+<td>On-demand</td>
+<td>N/A (managed service)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="pre-changeover-backup-checklist">Pre-Changeover Backup
+Checklist</h4>
+<p>Before each deployment or major changeover, the following backup
+steps are executed:</p>
+<ol type="1">
+<li><code>gcloud firestore export gs://pawscope-3b1be-backups/pre-deploy-$(date +%Y%m%d)</code>
+— Export full Firestore database.</li>
+<li>Verify Storage bucket versioning is active.</li>
+<li>Tag the current Git commit:
+<code>git tag -a pre-deploy-v1.x -m "Pre-deployment backup"</code>.</li>
+<li>Record the current Cloud Run revision ID for potential
+rollback.</li>
+</ol>
+<h3 id="risk-assessment-and-mitigation">2.2 Risk Assessment and
+Mitigation</h3>
+<table>
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 14%" />
+<col style="width: 19%" />
+<col style="width: 29%" />
+<col style="width: 29%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Risk</th>
+<th>Impact</th>
+<th>Likelihood</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>AI Backend Downtime</strong> — Cloud Run service becomes
+unavailable</td>
+<td>High — Breed/disease scanning features unusable</td>
+<td>Low</td>
+<td>Cloud Run auto-scaling with min-instances set to 1; health-check
+endpoint (<code>/health</code>) monitored; the app displays a
+user-friendly error message (“AI service temporarily unavailable, please
+try again”) with retry option.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Data Loss</strong> — Firestore or Storage data
+corruption</td>
+<td>Critical — Loss of user data, pet profiles, scan records</td>
+<td>Very Low</td>
+<td>Daily automated backups; Firestore point-in-time recovery; Storage
+object versioning; security rules prevent unauthorised writes.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>API Key Exposure</strong> — SendGrid or Firebase keys
+leaked</td>
+<td>High — Potential abuse of email services or Firebase resources</td>
+<td>Low</td>
+<td>API keys stored as Firebase Secrets (not in source code);
+Application Default Credentials used for backend authentication;
+<code>.gitignore</code> configured to exclude sensitive files.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Model Accuracy Degradation</strong> — AI models produce
+incorrect results over time</td>
+<td>Medium — Incorrect breed/disease identification</td>
+<td>Medium</td>
+<td>Admin module allows review of analysis records; user feedback
+mechanism in place; model versioning enables rollback to previous
+models.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Failed Deployment</strong> — New version introduces breaking
+changes</td>
+<td>High — App crash or critical feature failure</td>
+<td>Medium</td>
+<td>Git tagging for rollback; Cloud Run traffic splitting (canary
+deployment); staged rollout on app stores; automated unit tests
+(<code>flutter test</code>) run before deployment.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Firebase Service Outage</strong> — Google Firebase platform
+experiences downtime</td>
+<td>Critical — Entire app non-functional</td>
+<td>Very Low</td>
+<td>Firebase provides 99.95% SLA; local caching with
+<code>shared_preferences</code> for session persistence; offline-first
+patterns where feasible.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rollback-procedure">2.3 Rollback Procedure</h3>
+<p>In the event of a failed deployment:</p>
+<ol type="1">
+<li><strong>Cloud Run Backend:</strong> Roll back to the previous
+revision using
+<code>gcloud run services update-traffic petscan-ai --to-revisions=&lt;previous-revision&gt;=100</code>.</li>
+<li><strong>Cloud Functions:</strong> Redeploy from the previously
+tagged Git commit using
+<code>firebase deploy --only functions</code>.</li>
+<li><strong>Mobile App:</strong> If released to app stores, submit a
+hotfix or use staged rollout to halt distribution. For internal testing,
+redistribute the previous APK/IPA.</li>
+<li><strong>Firestore Rules:</strong> Revert rules from Git and redeploy
+using <code>firebase deploy --only firestore:rules</code>.</li>
+</ol>
+<hr />
+<h2 id="on-site-setup">3. On-site Setup</h2>
+<h3 id="pre-setup-preparations">3.1 Pre-Setup Preparations</h3>
+<p>Before setting up PawScope on the client’s infrastructure, the
+following preparations were completed:</p>
+<table>
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 58%" />
+<col style="width: 31%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Preparation Task</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Firebase Project Setup</strong></td>
+<td>Created Firebase project <code>pawscope-3b1be</code> with Blaze
+(pay-as-you-go) billing plan to enable Cloud Functions and Cloud
+Run.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Google Cloud Project Configuration</strong></td>
+<td>Enabled Cloud Run API, Cloud Build API, Artifact Registry API, and
+Firebase Admin SDK in the Google Cloud Console.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Domain &amp; Region Selection</strong></td>
+<td>Selected <code>asia-southeast1</code> (Singapore) as the primary
+region for Cloud Functions and Cloud Run to minimise latency for the
+target user base.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Authentication Providers</strong></td>
+<td>Configured Email/Password and Google Sign-In authentication
+providers in Firebase Auth console.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>SendGrid Account</strong></td>
+<td>Created a SendGrid account and configured a verified sender email
+(<code>pawscope1@outlook.com</code>) for OTP email delivery.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Development Environment</strong></td>
+<td>Ensured Flutter SDK (≥3.9.2), Dart SDK, Python 3.11, Docker,
+Firebase CLI, and Google Cloud CLI were installed on the development
+machine.</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Test Devices</strong></td>
+<td>Prepared Android devices (Android 12+) and iOS devices (iOS 15+)
+with developer mode enabled for on-device testing.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="setup-procedures">3.2 Setup Procedures</h3>
+<p>The on-site setup follows a sequential process to ensure each layer
+is operational before proceeding:</p>
+<h4 id="phase-1-firebase-services-deployment-day-1">Phase 1: Firebase
+Services Deployment (Day 1)</h4>
+<pre><code>Step 1: firebase login
+Step 2: firebase use pawscope-3b1be
+Step 3: firebase deploy --only firestore:rules
+Step 4: firebase deploy --only storage
+Step 5: firebase functions:secrets:set SENDGRID_API_KEY
+Step 6: firebase deploy --only functions
+Step 7: Verify Cloud Functions in Firebase Console</code></pre>
+<h4 id="phase-2-ai-backend-deployment-day-12">Phase 2: AI Backend
+Deployment (Day 1–2)</h4>
+<pre><code>Step 1: cd backend
+Step 2: docker build -t petscan-ai .
+Step 3: docker run -p 8080:8080 petscan-ai  (local verification)
+Step 4: curl http://localhost:8080/health  (verify health endpoint)
+Step 5: gcloud run deploy petscan-ai \
+          --source ./backend \
+          --region asia-southeast1 \
+          --allow-unauthenticated \
+          --memory 2Gi \
+          --cpu 2 \
+          --min-instances 0 \
+          --max-instances 3
+Step 6: Verify deployment at Cloud Run URL /health
+Step 7: Test /predict and /predict-disease endpoints with sample images</code></pre>
+<h4 id="phase-3-mobile-application-build-distribution-day-23">Phase 3:
+Mobile Application Build &amp; Distribution (Day 2–3)</h4>
+<pre><code>Step 1: flutter pub get
+Step 2: flutter test  (run automated unit tests)
+Step 3: flutter build apk --release  (Android)
+Step 4: flutter build ios --release  (iOS)
+Step 5: Distribute APK via internal testing track / Firebase App Distribution
+Step 6: Submit iOS build via TestFlight for internal testing
+Step 7: Perform end-to-end testing on physical devices</code></pre>
+<h4 id="phase-4-verification-go-live-day-34">Phase 4: Verification &amp;
+Go-Live (Day 3–4)</h4>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 53%" />
+<col style="width: 26%" />
+</colgroup>
+<thead>
+<tr>
+<th>Test</th>
+<th>Expected Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User registration (email + Google)</td>
+<td>Account created, OTP email received</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Login / persistent session</td>
+<td>User remains logged in after app restart</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Pet profile CRUD</td>
+<td>Create, read, update pet profiles with photo upload</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>AI Breed Identification</td>
+<td>Upload photo → species + top-5 breed results returned</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>AI Skin Disease Detection</td>
+<td>Upload photo → species + disease predictions returned</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Schedule management</td>
+<td>Create, view, edit calendar events with reminders</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Password reset (OTP flow)</td>
+<td>OTP sent via email → password updated via Cloud Function</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Admin dashboard</td>
+<td>Admin can manage accounts, review feedback, manage FAQ</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<h3 id="setup-schedule">3.3 Setup Schedule</h3>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 40%" />
+<col style="width: 40%" />
+</colgroup>
+<thead>
+<tr>
+<th>Day</th>
+<th>Activity</th>
+<th>Duration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Day 1</td>
+<td>Firebase services deployment + security rules + Cloud Functions</td>
+<td>4 hours</td>
+</tr>
+<tr>
+<td>Day 1–2</td>
+<td>AI backend Docker build, local testing, Cloud Run deployment</td>
+<td>6 hours</td>
+</tr>
+<tr>
+<td>Day 2–3</td>
+<td>Flutter app build (Android + iOS), distribution, initial
+testing</td>
+<td>5 hours</td>
+</tr>
+<tr>
+<td>Day 3–4</td>
+<td>End-to-end verification, bug fixes, go-live</td>
+<td>5 hours</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td></td>
+<td><strong>~20 hours (4 working days)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="training-procedure">4. Training Procedure</h2>
+<h3 id="training-overview">4.1 Training Overview</h3>
+<p>Training sessions are designed to equip end users and administrators
+with the knowledge to operate PawScope effectively. Two distinct
+training programmes are provided:</p>
+<table>
+<colgroup>
+<col style="width: 37%" />
+<col style="width: 31%" />
+<col style="width: 19%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr>
+<th>Training Programme</th>
+<th>Target Audience</th>
+<th>Duration</th>
+<th>Mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>User Training</strong></td>
+<td>Pet owners (end users)</td>
+<td>1.5 hours</td>
+<td>In-person / Video call</td>
+</tr>
+<tr>
+<td><strong>Admin Training</strong></td>
+<td>System administrators</td>
+<td>2.5 hours</td>
+<td>In-person / Video call</td>
+</tr>
+</tbody>
+</table>
+<h3 id="user-training-content">4.2 User Training Content</h3>
+<table>
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 21%" />
+<col style="width: 27%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Module</th>
+<th>Duration</th>
+<th>Topics Covered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Account Setup</strong></td>
+<td>15 min</td>
+<td>Registration (email &amp; Google Sign-In), email verification via
+OTP, login, forgot password flow</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Pet Profile Management</strong></td>
+<td>20 min</td>
+<td>Adding a new pet (name, species, breed, DOB, weight), uploading pet
+photos via gallery, editing and viewing pet details</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>AI Features</strong></td>
+<td>25 min</td>
+<td>Using the AI Breed Identifier (taking/uploading photos, interpreting
+results), using the AI Skin Disease Identifier (scanning process,
+reading confidence scores, understanding recommendations)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Schedule &amp; Calendar</strong></td>
+<td>15 min</td>
+<td>Creating health care events (vaccination, grooming, vet visits),
+setting reminders, viewing calendar</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Settings &amp; Support</strong></td>
+<td>15 min</td>
+<td>Updating account details, changing password, notification settings,
+accessing Help &amp; FAQ, submitting feedback</td>
+</tr>
+</tbody>
+</table>
+<h3 id="admin-training-content">4.3 Admin Training Content</h3>
+<table>
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 21%" />
+<col style="width: 27%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Module</th>
+<th>Duration</th>
+<th>Topics Covered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Admin Login &amp; Dashboard</strong></td>
+<td>15 min</td>
+<td>Admin authentication flow, dashboard overview and metrics</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>User Account Management</strong></td>
+<td>20 min</td>
+<td>Viewing user accounts, managing account status, reviewing user
+details</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Analysis Records Management</strong></td>
+<td>25 min</td>
+<td>Reviewing AI scan results, verifying/correcting diagnoses,
+understanding model accuracy</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Feedback Management</strong></td>
+<td>20 min</td>
+<td>Reviewing user feedback, responding to feedback, categorisation</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>FAQ Management</strong></td>
+<td>20 min</td>
+<td>Creating, editing, and publishing FAQ articles, managing community
+tips</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Firebase Console Operations</strong></td>
+<td>30 min</td>
+<td>Monitoring Firestore data, checking Cloud Functions logs, reviewing
+Storage usage, managing authentication</td>
+</tr>
+</tbody>
+</table>
+<h3 id="training-materials">4.4 Training Materials</h3>
+<table>
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 25%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th>Material</th>
+<th>Format</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User Guide</td>
+<td>PDF / In-app</td>
+<td>Step-by-step guide with annotated screenshots for all user
+features</td>
+</tr>
+<tr>
+<td>Admin Manual</td>
+<td>PDF</td>
+<td>Comprehensive admin operations manual covering dashboard, account
+management, and Firebase Console</td>
+</tr>
+<tr>
+<td>Video Tutorials</td>
+<td>MP4 / YouTube (unlisted)</td>
+<td>Recorded screen-share walkthroughs for each training module</td>
+</tr>
+<tr>
+<td>Quick Reference Card</td>
+<td>PDF (1-page)</td>
+<td>Concise cheat sheet with key navigational paths and feature
+summaries</td>
+</tr>
+<tr>
+<td>FAQ Document</td>
+<td>In-app (Help &amp; FAQ)</td>
+<td>Searchable FAQ accessible from within the PawScope app</td>
+</tr>
+</tbody>
+</table>
+<h3 id="training-schedule">4.5 Training Schedule</h3>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 25%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr>
+<th>Session</th>
+<th>Date</th>
+<th>Time</th>
+<th>Audience</th>
+<th>Trainer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Session 1: User Training</td>
+<td>Week 1, Day 1</td>
+<td>10:00 AM – 11:30 AM</td>
+<td>End Users (Group 1)</td>
+<td>Developer / Project Lead</td>
+</tr>
+<tr>
+<td>Session 2: User Training</td>
+<td>Week 1, Day 2</td>
+<td>10:00 AM – 11:30 AM</td>
+<td>End Users (Group 2)</td>
+<td>Developer / Project Lead</td>
+</tr>
+<tr>
+<td>Session 3: Admin Training</td>
+<td>Week 1, Day 3</td>
+<td>10:00 AM – 12:30 PM</td>
+<td>System Administrators</td>
+<td>Developer / Project Lead</td>
+</tr>
+<tr>
+<td>Session 4: Q&amp;A / Hands-on</td>
+<td>Week 1, Day 4</td>
+<td>2:00 PM – 3:30 PM</td>
+<td>All Participants</td>
+<td>Developer / Project Lead</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="follow-up-plan">5. Follow-up Plan</h2>
+<h3 id="follow-up-objectives">5.1 Follow-up Objectives</h3>
+<p>The follow-up phase aims to verify system reliability, gather user
+feedback, and address any issues that emerge post-deployment. The plan
+spans <strong>8 weeks</strong> after the initial go-live date.</p>
+<h3 id="follow-up-schedule">5.2 Follow-up Schedule</h3>
+<table>
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 27%" />
+<col style="width: 21%" />
+<col style="width: 35%" />
+</colgroup>
+<thead>
+<tr>
+<th>Week</th>
+<th>Activity</th>
+<th>Method</th>
+<th>Responsible</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Week 1</td>
+<td><strong>Daily monitoring</strong> — Check Cloud Run logs, Firebase
+Console for errors, monitor Cloud Function execution</td>
+<td>Firebase Console, Google Cloud Monitoring</td>
+<td>Developer</td>
+</tr>
+<tr>
+<td>Week 2</td>
+<td><strong>User feedback collection</strong> — Gather initial
+impressions and issues via in-app feedback form</td>
+<td>In-app feedback module</td>
+<td>Developer + Client</td>
+</tr>
+<tr>
+<td>Week 3</td>
+<td><strong>Performance review</strong> — Analyse API response times,
+app load times, AI prediction latency</td>
+<td>Cloud Run metrics, Firebase Performance</td>
+<td>Developer</td>
+</tr>
+<tr>
+<td>Week 4</td>
+<td><strong>Bug fix release</strong> — Address reported issues, deploy
+patch update to Cloud Run and app stores</td>
+<td>Git, CI/CD pipeline</td>
+<td>Developer</td>
+</tr>
+<tr>
+<td>Week 5</td>
+<td><strong>User satisfaction survey</strong> — Distribute survey to
+assess usability and feature satisfaction</td>
+<td>Google Forms / In-app</td>
+<td>Client</td>
+</tr>
+<tr>
+<td>Week 6</td>
+<td><strong>AI model accuracy review</strong> — Review analysis records,
+compare AI predictions with verified diagnoses</td>
+<td>Admin dashboard analysis records module</td>
+<td>Developer + Client</td>
+</tr>
+<tr>
+<td>Week 7</td>
+<td><strong>System health audit</strong> — Full review of Firestore
+usage, Storage costs, Cloud Run scaling, security rules</td>
+<td>Google Cloud Console</td>
+<td>Developer</td>
+</tr>
+<tr>
+<td>Week 8</td>
+<td><strong>Final handover meeting</strong> — Present system health
+report, address outstanding issues, discuss future enhancements</td>
+<td>In-person / Video call</td>
+<td>Developer + Client</td>
+</tr>
+</tbody>
+</table>
+<h3 id="monitoring-metrics">5.3 Monitoring Metrics</h3>
+<p>The following key performance indicators (KPIs) will be tracked
+during the follow-up period:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Target</th>
+<th>Monitoring Tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>API Response Time</strong> (breed/disease prediction)</td>
+<td>&lt; 5 seconds</td>
+<td>Cloud Run logs</td>
+</tr>
+<tr>
+<td><strong>App Crash Rate</strong></td>
+<td>&lt; 1%</td>
+<td>Firebase Crashlytics (if configured)</td>
+</tr>
+<tr>
+<td><strong>Cloud Function Success Rate</strong> (OTP, Password
+Reset)</td>
+<td>&gt; 99%</td>
+<td>Firebase Functions logs</td>
+</tr>
+<tr>
+<td><strong>User Registration Rate</strong></td>
+<td>Trending upward</td>
+<td>Firestore user collection count</td>
+</tr>
+<tr>
+<td><strong>AI Prediction Accuracy</strong></td>
+<td>&gt; 85% confidence on correct results</td>
+<td>Admin analysis records</td>
+</tr>
+<tr>
+<td><strong>User Feedback Score</strong></td>
+<td>≥ 4.0 / 5.0</td>
+<td>In-app feedback module</td>
+</tr>
+</tbody>
+</table>
+<h3 id="issue-escalation-procedure">5.4 Issue Escalation Procedure</h3>
+<pre><code>Level 1: Minor UI/UX issues
+  → Logged in feedback system → Addressed in next scheduled patch
+
+Level 2: Feature malfunction (e.g., scan not working, schedule not saving)
+  → Immediate investigation → Hotfix deployed within 48 hours
+
+Level 3: Critical system failure (e.g., backend down, data loss)
+  → Emergency response → Rollback to last known good version
+  → Root cause analysis within 24 hours</code></pre>
+<h3 id="post-follow-up-handover">5.5 Post-Follow-up Handover</h3>
+<p>At the conclusion of the 8-week follow-up period, the following
+deliverables will be handed over to the client:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Deliverable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>System Health Report</strong></td>
+<td>Comprehensive report on system performance, uptime, and usage
+statistics</td>
+</tr>
+<tr>
+<td><strong>Source Code Repository</strong></td>
+<td>Full access to Git repository with documentation</td>
+</tr>
+<tr>
+<td><strong>Deployment Documentation</strong></td>
+<td>Step-by-step guides for re-deploying each component (Firebase, Cloud
+Run, Mobile App)</td>
+</tr>
+<tr>
+<td><strong>Admin Credentials</strong></td>
+<td>Firebase Console access, Google Cloud project ownership
+transfer</td>
+</tr>
+<tr>
+<td><strong>Maintenance Guide</strong></td>
+<td>Instructions for routine maintenance tasks (backups, monitoring,
+updating AI models)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>End of System Deployment Chapter</em></p>
