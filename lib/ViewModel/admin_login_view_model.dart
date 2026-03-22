@@ -54,21 +54,27 @@ class AdminLoginViewModel extends BaseViewModel {
     notifyListeners();
 
     try {
-      final usernameInput = adminIdController.text.trim();
+      final input = adminIdController.text.trim();
 
-      // DEBUG PRINT 1: Check what the user typed
-      debugPrint("DEBUG: User typed username: $usernameInput");
+      // Check if input is an email or username
+      final isEmail = RegExp(
+        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+      ).hasMatch(input);
 
-      // 1. Find Email associated with this Username
-      final emailToLogin = await _getEmailFromUsername(usernameInput);
+      String? emailToLogin;
 
-      // DEBUG PRINT 2: Check what email we found
-      debugPrint("DEBUG: Found email from database: $emailToLogin");
+      if (isEmail) {
+        // Input is already an email, use it directly
+        emailToLogin = input;
+      } else {
+        // Input is a username, look up the email in Firestore
+        emailToLogin = await _getEmailFromUsername(input);
+      }
 
       if (emailToLogin == null) {
         throw FirebaseAuthException(
           code: 'user-not-found',
-          message: 'Username "$usernameInput" not found in database.',
+          message: 'Username "$input" not found in database.',
         );
       }
 
@@ -145,12 +151,12 @@ class AdminLoginViewModel extends BaseViewModel {
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        // ADD .trim() HERE to fix the trailing space issue automatically
         String email = snapshot.docs.first.get('userEmail');
         return email.trim();
       }
     } catch (e) {
-      debugPrint("DEBUG: Error in _getEmailFromUsername: $e");
+      // Rethrow so the actual error is visible in the UI
+      rethrow;
     }
     return null;
   }
