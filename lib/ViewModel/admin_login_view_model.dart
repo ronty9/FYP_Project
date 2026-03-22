@@ -54,27 +54,38 @@ class AdminLoginViewModel extends BaseViewModel {
     notifyListeners();
 
     try {
-      final input = adminIdController.text.trim();
+      final usernameInput = adminIdController.text.trim();
 
-      // Check if input is an email or username
-      final isEmail = RegExp(
-        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-      ).hasMatch(input);
+      // DEBUG PRINT 1: Check what the user typed
+      debugPrint("DEBUG: User typed username: $usernameInput");
 
-      String? emailToLogin;
+      // 1. Find Email associated with this Username
+      final emailToLogin = await _getEmailFromUsername(usernameInput);
 
-      if (isEmail) {
-        // Input is already an email, use it directly
-        emailToLogin = input;
-      } else {
-        // Input is a username, look up the email in Firestore
-        emailToLogin = await _getEmailFromUsername(input);
-      }
+      // DEBUG PRINT 2: Check what email we found
+      debugPrint("DEBUG: Found email from database: $emailToLogin");
 
       if (emailToLogin == null) {
+        // TEMP DIAGNOSTIC: Show what admin usernames exist in Firestore
+        String diagInfo = '';
+        try {
+          final allAdmins = await FirebaseFirestore.instance
+              .collection('user')
+              .where('userRole', isEqualTo: 'Admin')
+              .get();
+          if (allAdmins.docs.isEmpty) {
+            diagInfo = ' (No Admin users found in Firestore)';
+          } else {
+            final names = allAdmins.docs
+                .map((d) => '"${d.data()['userName'] ?? 'NO_FIELD'}"')
+                .join(', ');
+            diagInfo = ' (Admin usernames in DB: $names)';
+          }
+        } catch (_) {}
+
         throw FirebaseAuthException(
           code: 'user-not-found',
-          message: 'Username "$input" not found in database.',
+          message: 'Username "$usernameInput" not found.$diagInfo',
         );
       }
 
@@ -122,7 +133,7 @@ class AdminLoginViewModel extends BaseViewModel {
 
       String msg = 'Login failed.';
       if (e.code == 'user-not-found') {
-        msg = 'Username not found.';
+        msg = e.message ?? 'Username not found.';
       } else if (e.code == 'wrong-password') {
         msg = 'Incorrect password.';
       } else if (e.code == 'invalid-email') {
@@ -155,8 +166,7 @@ class AdminLoginViewModel extends BaseViewModel {
         return email.trim();
       }
     } catch (e) {
-      // Rethrow so the actual error is visible in the UI
-      rethrow;
+      debugPrint("DEBUG: Error in _getEmailFromUsername: $e");
     }
     return null;
   }

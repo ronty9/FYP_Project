@@ -22,9 +22,9 @@ service cloud.firestore {
     // Custom doc IDs (e.g. U000001), providerId = Auth UID
     // ═══════════════════════════════════════════
     match /user/{userId} {
-      // Any authenticated user can read user docs
-      // (needed for username lookup at login, calendar pet lookups)
-      allow read: if isSignedIn();
+      // Allow read without authentication
+      // (needed for username → email lookup at login, before user is signed in)
+      allow read: if true;
 
       // Users can create their own doc during registration (transaction)
       allow create: if isSignedIn();
