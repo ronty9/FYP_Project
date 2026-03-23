@@ -1,3 +1,6 @@
+// Copyright © 2026 TY Chew. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root.
+
 /// Pure-logic validation utilities used across the PetScan app.
 ///
 /// Every method here is a static, side-effect-free function so it can be

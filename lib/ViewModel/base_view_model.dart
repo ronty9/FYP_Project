@@ -1,3 +1,6 @@
+// Copyright © 2026 TY Chew. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root.
+
 import 'package:flutter/foundation.dart';
 
 /// Provides shared loading, message and error state for all view models.

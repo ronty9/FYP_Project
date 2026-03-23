@@ -1,3 +1,6 @@
+// Copyright © 2026 TY Chew. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root.
+
 class BreedOption {
   const BreedOption({required this.id, required this.name});
 

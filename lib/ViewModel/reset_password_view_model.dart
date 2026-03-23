@@ -1,3 +1,6 @@
+// Copyright © 2026 TY Chew. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root.
+
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 

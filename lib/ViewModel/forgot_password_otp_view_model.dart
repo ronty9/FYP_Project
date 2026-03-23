@@ -1,3 +1,6 @@
+// Copyright © 2026 TY Chew. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root.
+
 import 'package:flutter/material.dart';
 import '../services/otp_service.dart';
 import '../View/reset_password_view.dart';

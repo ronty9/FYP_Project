@@ -1,3 +1,6 @@
+// Copyright © 2026 TY Chew. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root.
+
 // lib/calendar_event.dart
 import 'models/reminder_duration.dart';
 import 'models/schedule_type.dart';
