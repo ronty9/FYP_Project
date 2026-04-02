@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PawScope — User Quick Reference Card</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --primary: #6C5CE7;
+      --primary-light: #A29BFE;
+      --accent: #00CEC9;
+      --accent2: #FDCB6E;
+      --bg-dark: #1A1A2E;
+      --bg-card: #16213E;
+      --bg-card2: #0F3460;
+      --text-main: #E8E8F0;
+      --text-muted: #A0A0C0;
+      --border: rgba(108, 92, 231, 0.3);
+      --success: #00B894;
+      --warning: #E17055;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-size: 9px;
+      line-height: 1.4;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 14mm 12mm 10mm 12mm;
+      margin: 0 auto;
+      background: linear-gradient(160deg, #1A1A2E 0%, #16213E 40%, #0F3460 100%);
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+    }
+
+    .page::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -80px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(108, 92, 231, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .page::after {
+      content: '';
+      position: absolute;
+      bottom: -100px;
+      left: -50px;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(0, 206, 201, 0.1) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+      position: relative;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-light), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .header h1 span {
+      font-weight: 400;
+      font-size: 11px;
+      display: block;
+      background: none;
+      -webkit-text-fill-color: var(--text-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .header-badge {
+      background: linear-gradient(135deg, var(--primary), #8B5CF6);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* ── GRID LAYOUT ── */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .grid-full {
+      grid-column: 1 / -1;
+    }
+
+    /* ── SECTIONS ── */
+    .section {
+      background: rgba(22, 33, 62, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 9px;
+      backdrop-filter: blur(10px);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(108, 92, 231, 0.2);
+    }
+
+    .section-title .icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    .icon-purple { background: linear-gradient(135deg, #6C5CE7, #A29BFE); }
+    .icon-teal { background: linear-gradient(135deg, #00CEC9, #55EFC4); }
+    .icon-orange { background: linear-gradient(135deg, #E17055, #FDCB6E); }
+    .icon-blue { background: linear-gradient(135deg, #0984E3, #74B9FF); }
+    .icon-green { background: linear-gradient(135deg, #00B894, #55EFC4); }
+    .icon-pink { background: linear-gradient(135deg, #FD79A8, #E84393); }
+
+    /* ── TABLES ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5px;
+    }
+
+    th {
+      background: rgba(108, 92, 231, 0.15);
+      padding: 4px 6px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 7.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary-light);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 3px 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background: rgba(108, 92, 231, 0.05);
+    }
+
+    /* ── BULLET LISTS ── */
+    ul.feature-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul.feature-list li {
+      padding: 2px 0 2px 14px;
+      position: relative;
+      font-size: 8.5px;
+      color: var(--text-main);
+    }
+
+    ul.feature-list li::before {
+      content: '▸';
+      position: absolute;
+      left: 2px;
+      color: var(--primary-light);
+      font-weight: bold;
+    }
+
+    .feature-label {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* ── ARCHITECTURE / NAV BOX ── */
+    .arch-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 0;
+      flex-wrap: wrap;
+    }
+
+    .arch-box {
+      background: rgba(108, 92, 231, 0.12);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      text-align: center;
+      font-size: 8px;
+      font-weight: 600;
+      min-width: 75px;
+      flex: 1;
+    }
+
+    .arch-box .sub {
+      font-size: 6.5px;
+      font-weight: 400;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 1px;
+    }
+
+    /* ── NOTE BOX ── */
+    .note-box {
+      background: rgba(253, 203, 110, 0.08);
+      border-left: 3px solid var(--accent2);
+      border-radius: 0 5px 5px 0;
+      padding: 4px 7px;
+      margin-top: 5px;
+      font-size: 7.5px;
+      color: var(--text-muted);
+    }
+
+    .note-box strong {
+      color: var(--accent2);
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+      font-size: 7px;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer strong {
+      color: var(--primary-light);
+    }
+
+    /* Page 2 specific */
+    .page:last-child {
+      page-break-after: auto;
+    }
+
+    .two-col-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 12px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ PAGE 1 ═══════════════════ -->
+<div class="page">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-icon">🐾</div>
+      <h1>PawScope <span>User Quick Reference</span></h1>
+    </div>
+    <div class="header-badge">v1.0 • End User Guide</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ── WELCOME ── -->
+    <div class="section grid-full">
+      <div class="section-title">
+        <span class="icon icon-purple">👋</span>
+        Welcome to PawScope
+      </div>
+      <p style="font-size: 8.5px; color: var(--text-muted); margin-bottom: 5px;">
+        Your ultimate AI-powered pet companion. Manage pet profiles, identify breeds, detect skin diseases, and schedule care tasks all in one convenient app.
+      </p>
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <div class="arch-box" style="border-color: rgba(108,92,231,0.4);">🏠 Home<span class="sub">Dashboard &amp; Tips</span></div>
+        <div class="arch-box" style="border-color: rgba(0,206,201,0.4);">📷 AI Scan<span class="sub">Breed &amp; Disease</span></div>
+        <div class="arch-box" style="border-color: rgba(253,203,110,0.4);">📅 Calendar<span class="sub">Tasks &amp; Reminders</span></div>
+        <div class="arch-box" style="border-color: rgba(255,167,38,0.4);">👤 Profile<span class="sub">Pets &amp; Settings</span></div>
+      </div>
+    </div>
+
+    <!-- ── GETTING STARTED ── -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-teal">🚀</span>
+        Getting Started
+      </div>
+      <ul class="feature-list">
+        <li><span class="feature-label">Sign Up / Login</span> — Create an account using Email/Password, or use Google Sign-In for quick access.</li>
+        <li><span class="feature-label">Create a Pet Profile</span> — Head to the <strong>Profile</strong> tab and tap "Add Pet" to set up your companion.</li>
+        <li><span class="feature-label">Customize Profile</span> — Add a cute photo, assign their breed, weight, gender, and birthdate.</li>
+        <li><span class="feature-label">OTP Security</span> — You may be requested to verify your account via OTP for security purposes.</li>
+      </ul>
+      <div class="note-box" style="margin-top: 6px;">
+        <strong>💡 Tip:</strong> You can manage multiple pet profiles under a single user account.
+      </div>
+    </div>
+
+    <!-- ── AI BREED SCAN ── -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-pink">🐕</span>
+        AI Breed Scanner
+      </div>
+      <ul class="feature-list">
+        <li><span class="feature-label">1. Select Species</span> — Choose either 'Cat' or 'Dog' before scanning.</li>
+        <li><span class="feature-label">2. Capture Photo</span> — Use your camera live or upload a recent photo from your gallery.</li>
+        <li><span class="feature-label">3. Analyze</span> — Tap the scan button and let PawScope process the image.</li>
+        <li><span class="feature-label">4. View Results</span> — Find out your pet's breed! The app displays the top-5 likely matches with confidence %.</li>
+      </ul>
+      <div class="note-box" style="margin-top: 6px; border-left-color: #55EFC4; background: rgba(85, 239, 196, 0.08);">
+        <strong style="color: #55EFC4;">📸 Best Results:</strong> Ensure well-lit photos showing the pet's full face and body.
+      </div>
+    </div>
+
+    <!-- ── AI DISEASE SCAN ── -->
+    <div class="section grid-full">
+      <div class="section-title">
+        <span class="icon icon-orange">🩺</span>
+        AI Skin Disease Scanner
+      </div>
+      <div style="display: flex; gap: 12px; align-items: flex-start;">
+        <div style="flex: 1;">
+          <ul class="feature-list">
+            <li><span class="feature-label">Purpose</span> — Analyze unusual skin patches, rashes, or lesions on your pet.</li>
+            <li><span class="feature-label">How To</span> — Select the proper species, take a clear &amp; close-up photo of the affected area, and begin the scan.</li>
+            <li><span class="feature-label">Results</span> — View the Top-3 potential skin conditions and access general advice.</li>
+            <li><span class="feature-label">History</span> — Your scans are saved in your Scan History so you can review them during a vet visit.</li>
+          </ul>
+        </div>
+        <div style="flex: 0 0 auto; max-width: 190px;">
+          <div class="note-box" style="border-left-color: var(--warning); background: rgba(225, 112, 85, 0.08); margin-top: 0;">
+            <strong style="color: var(--warning);">⚠ Disclaimer:</strong> PawScope provides AI-assisted analysis and should NEVER replace professional medical advice. Always consult a certified veterinarian for diagnosis and medical treatment.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- End Grid -->
+
+  <div class="footer">
+    <strong>PawScope</strong> • User Quick Reference — Page 1 of 2 • © 2026
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 2 ═══════════════════ -->
+<div class="page">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-icon">🐾</div>
+      <h1>PawScope <span>Features &amp; Support</span></h1>
+    </div>
+    <div class="header-badge">End User Guide</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ── PET MANAGEMENT ── -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-purple">🦴</span>
+        Pet Management &amp; Gallery
+      </div>
+      <ul class="feature-list">
+        <li><span class="feature-label">Pet Details</span> — Track basic information like age, weight progression, and assigned breed.</li>
+        <li><span class="feature-label">Photo Gallery</span> — Tap into a pet's profile to create a dedicated photo gallery of all their best moments.</li>
+        <li><span class="feature-label">Editing Details</span> — You can easily update your pet's details anytime via the Profile tab.</li>
+        <li><span class="feature-label">Removal</span> — Delete pet profiles if they are no longer needed (Warning: This will also remove their gallery photos).</li>
+      </ul>
+    </div>
+
+    <!-- ── SCHEDULES & REMINDERS ── -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon icon-blue">⏰</span>
+        Schedules &amp; Reminders
+      </div>
+      <ul class="feature-list">
+        <li><span class="feature-label">Categories</span> — Organize tasks by specific tags: Grooming, Medication, Vaccine, Food/Water, or Custom tasks.</li>
+        <li><span class="feature-label">Calendar View</span> — Head to the Calendar tab to see all upcoming tasks sorted by date for easy viewing.</li>
+        <li><span class="feature-label">Push Notifications</span> — Never miss a task! Get local push alerts right on your phone when a reminder is due.</li>
+        <li><span class="feature-label">Customization</span> — Adjust notification preferences (Sound / Vibration) within the Profile settings menu.</li>
+      </ul>
+      <div class="note-box" style="margin-top: 6px;">
+        <strong>🔔 Note:</strong> Be sure to grant "Notification" permissions to PawScope in your phone's OS settings to receive reminders.
+      </div>
+    </div>
+
+    <!-- ── COMMUNITY & SUPPORT ── -->
+    <div class="section grid-full">
+      <div class="section-title">
+        <span class="icon icon-green">🤝</span>
+        Community &amp; Support
+      </div>
+      <div class="two-col-list">
+        <ul class="feature-list">
+          <li><span class="feature-label">Community Tips</span> — Convenient access to curated articles and tips on pet care, diet, and training right on your Home dashboard.</li>
+          <li><span class="feature-label">FAQs</span> — Browse the frequently asked questions to learn more about application features and pet care basics.</li>
+        </ul>
+        <ul class="feature-list">
+          <li><span class="feature-label">Submit Feedback</span> — Found a bug or have a suggestion? Use the feedback form! Application admins can review and reply directly to you.</li>
+          <li><span class="feature-label">Password Resets</span> — Forgotten your password? Securely reset it right from the login screen using your registered email.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ── TROUBLESHOOTING ── -->
+    <div class="section grid-full">
+      <div class="section-title">
+        <span class="icon icon-orange">🛠️</span>
+        Pro Tips &amp; Troubleshooting
+      </div>
+      <table>
+        <thead>
+          <tr><th>Issue / Goal</th><th>Recommendation</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Low AI Confidence Scores</strong></td>
+            <td>Ensure the room is well-lit. Avoid blurry photos, fast-moving subjects, or cluttered backgrounds. Focus directly on the pet's face/body or the specific skin area.</td>
+          </tr>
+          <tr>
+            <td><strong>Inaccurate / Confused Results</strong></td>
+            <td>Always double check your species selection! The AI models are strictly categorized by species. Running a cat photo through the dog AI will yield incorrect results.</td>
+          </tr>
+          <tr>
+            <td><strong>Missing Push Notifications</strong></td>
+            <td>Verify your phone's System Settings → Notifications → PawScope and ensure alerts are allowed. Finally, confirm your Sound/Vibe settings in the app.</td>
+          </tr>
+          <tr>
+            <td><strong>Reviewing Past Scans</strong></td>
+            <td>Need to show your vet a scan you did last month? Navigate to your <span style="color: var(--accent);">Profile</span> tab and tap <span style="color: var(--accent);">Scan History</span> to view the full log of all your AI scan results.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div> <!-- end grid -->
+
+  <div class="footer">
+    <strong>PawScope</strong> • User Quick Reference — Page 2 of 2 • © 2026
+  </div>
+</div>
+
+</body>
+</html>
