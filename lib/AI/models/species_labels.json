@@ -1,4 +1,14 @@
 {
-  "0": "cat",
-  "1": "dog"
+  "class_names": [
+    "cat",
+    "dog"
+  ],
+  "class_to_index": {
+    "cat": 0,
+    "dog": 1
+  },
+  "index_to_class": {
+    "0": "cat",
+    "1": "dog"
+  }
 }
